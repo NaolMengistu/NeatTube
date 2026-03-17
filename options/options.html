@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeatTube — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+
+<body>
+  <div class="options-container">
+    <header class="options-header">
+      <div class="brand">
+        <img src="../icons/icon48.png" alt="NeatTube" class="brand-icon">
+        <div>
+          <h1>NeatTube</h1>
+          <p class="subtitle">YouTube Enhancement Settings</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Global Toggle -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Extension</h2>
+        <label class="toggle-switch master">
+          <input type="checkbox" id="extensionEnabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="card-note">Master switch — disables all features when off.</p>
+    </section>
+
+    <!-- Shorts -->
+    <section class="card" id="shorts-card">
+      <div class="card-header">
+        <h2>🚫 Shorts Removal</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="shortsRemoval">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="sub-options">
+        <div class="option-row">
+          <span>Hide Shorts in sidebar</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="hideShortsInSidebar">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="option-row">
+          <span>Hide Shorts shelves (home / search / subs)</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="hideShortsInShelves">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="option-row">
+          <span>Redirect /shorts/ URLs to /watch</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="redirectShorts">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Members Only -->
+    <section class="card" id="members-card">
+      <div class="card-header">
+        <h2>🔒 Filter out Members-Only</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="membersOnlyFilter">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="sub-options">
+        <div class="option-row">
+          <span>Hide members-only badges</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="hideMembersBadges">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="option-row">
+          <span>Hide members-only shelves / cards</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="hideMembersShelves">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <p class="card-note">Uses heuristics to detect members-only content. May occasionally miss or over-match.</p>
+    </section>
+
+    <!-- Picture in Picture -->
+    <section class="card" id="pip-card">
+      <div class="card-header">
+        <h2>🖼️ Picture in Picture</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pictureInPicture">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="sub-options">
+        <div class="option-row">
+          <span>Auto PiP (enter automatically on tab switch)</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="autoPip">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <p class="card-note">Toggle the active video using the shortcut <kbd>Alt</kbd>+<kbd>P</kbd>. Works best when video
+        is playing.</p>
+    </section>
+
+    <!-- Dislikes -->
+    <section class="card" id="dislikes-card">
+      <div class="card-header">
+        <h2>👎 Show Dislike count</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="dislikeCount">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="card-note">Uses the Return YouTube Dislike public API. Counts are community-estimated and may not be
+        exact.</p>
+    </section>
+
+    <!-- Quality -->
+    <section class="card" id="quality-card">
+      <div class="card-header">
+        <h2>🎬 Auto HD Quality</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="autoQuality">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="sub-options">
+        <div class="option-row">
+          <span>Preferred resolution</span>
+          <select id="preferredQuality" class="select-input">
+            <option value="Auto">Auto</option>
+            <option value="144p">144p</option>
+            <option value="240p">240p</option>
+            <option value="360p">360p</option>
+            <option value="480p">480p</option>
+            <option value="720p">720p</option>
+            <option value="1080p">1080p</option>
+            <option value="1440p">1440p</option>
+            <option value="2160p">2160p (4K)</option>
+            <option value="4320p">4320p (8K)</option>
+          </select>
+        </div>
+        <div class="option-row">
+          <span>Reapply on navigation</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="reapplyQuality">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <p class="card-note">Best-effort: YouTube may override based on bandwidth, codec, or stream availability. Falls
+        back to the nearest lower available resolution.</p>
+    </section>
+
+    <!-- Debug -->
+    <section class="card">
+      <div class="card-header">
+        <h2>🐛 Debug Mode</h2>
+        <label class="toggle-switch">
+          <input type="checkbox" id="debugMode">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="card-note">Logs module activity to the browser console with [NeatTube] prefix.</p>
+    </section>
+
+    <!-- Actions -->
+    <section class="actions">
+      <button id="reset-defaults" class="btn btn-danger">Reset to Defaults</button>
+      <span class="save-status" id="save-status"></span>
+    </section>
+
+    <!-- Footer -->
+    <footer style="text-align: center; margin-top: 30px; font-size: 13px; color: var(--yt-spec-text-secondary);">
+      <p>Created by <a href="https://naol.dev" target="_blank"
+          style="color: var(--yt-spec-call-to-action); text-decoration: none;">naol.dev</a></p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+
+</html>

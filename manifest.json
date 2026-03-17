@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "NeatTube",
+  "version": "1.0.0",
+  "description": "YouTube, refined. Hide Shorts, restore dislikes, force quality, and pop any video into Picture-in-Picture.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "commands": {
+    "toggle-pip": {
+      "suggested_key": {
+        "default": "Alt+P"
+      },
+      "description": "Toggle Picture-in-Picture for the current video."
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content/selectors.js",
+        "content/settings.js",
+        "content/shorts.js",
+        "content/dislikes.js",
+        "content/members-filter.js",
+        "content/quality.js",
+        "content/pip.js",
+        "content/content-main.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://returnyoutubedislikeapi.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/quality-injector.js"
+      ],
+      "matches": [
+        "*://*.youtube.com/*"
+      ]
+    }
+  ]
+}

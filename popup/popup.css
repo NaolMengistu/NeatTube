@@ -1,0 +1,211 @@
+/* 
+ * NeatTube — Popup Styles
+ *
+ * Keeps the popup looking sleek, dark, and consistent with YouTube's own design language.
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #0f0f0f;
+  color: #e8e8e8;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+.popup-container {
+  padding: 16px;
+}
+
+/* ── Header ── */
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.brand h1 {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff4e45, #ff8c42);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Divider ── */
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+}
+
+/* ── Feature Rows ── */
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feature-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.feature-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.feature-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ccc;
+}
+
+/* ── Toggle Switch ── */
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #3a3a3a;
+  border-radius: 22px;
+  transition: background 0.25s ease;
+}
+
+.slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: #aaa;
+  border-radius: 50%;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.toggle-switch input:checked+.slider {
+  background: #cc0000;
+}
+
+.toggle-switch input:checked+.slider::before {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+.master-toggle .slider::before {
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  bottom: 2px;
+}
+
+.master-toggle {
+  width: 44px;
+  height: 24px;
+}
+
+.master-toggle input:checked+.slider {
+  background: #00c853;
+}
+
+/* ── Disabled state ── */
+
+.features.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── Select Input ── */
+
+.quality-row {
+  margin-top: 8px;
+}
+
+.select-input {
+  background: #2a2a2a;
+  color: #e8e8e8;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.select-input:focus {
+  border-color: #cc0000;
+}
+
+.select-input option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+/* ── Footer ── */
+
+.popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.options-link {
+  font-size: 12px;
+  color: #3ea6ff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.options-link:hover {
+  color: #7cc4ff;
+}
+
+.yt-note {
+  font-size: 10px;
+  color: #666;
+  font-style: italic;
+}
