@@ -7,6 +7,7 @@ A clean Manifest V3 Chrome/Chromium extension for YouTube that combines multiple
 ### Shorts Removal
 - Hides Shorts shelves on Home, Search, and Subscriptions pages
 - Hides the Shorts entry in the sidebar navigation
+- Hides the **Shorts tab** on individual channel pages
 - Optional: redirect `/shorts/{id}` URLs to regular `/watch?v={id}` player
 
 ### Members-Only Filtering
@@ -21,14 +22,15 @@ A clean Manifest V3 Chrome/Chromium extension for YouTube that combines multiple
 
 ### Picture-in-Picture
 - Instantly pop out the active video into a floating window using `Alt+P`
+- **Auto-PiP (Beta)**: Automatically triggers Picture-in-Picture when you switch tabs (uses Media Session API)
 - Intelligently finds the main playing video, ignoring suspended or background players
-- Uses native Chrome PiP functionality for maximum performance and zero overhead
 - Works seamlessly across YouTube's internal SPA page loads
 
 ### Auto Quality Selection
 - Automatically sets your preferred video resolution when a video loads
 - Supports: 144p, 240p, 360p, 480p, 720p, 1080p, 1440p, 2160p (4K), 4320p (8K)
-- **Fallback logic**: if your preferred resolution is unavailable, the nearest lower available resolution is used. If no lower resolution exists, YouTube's default is used
+- **High-Performance Injection**: Uses `localStorage` and bandwidth spoofing for instant quality selection on cold page loads
+- **Fallback logic**: if your preferred resolution is unavailable, the nearest lower available resolution is used.
 - Re-applies quality on SPA navigation (optional)
 
 ## Installation (Unpacked / Developer Mode)
@@ -71,8 +73,10 @@ NeatTube/
 │   ├── shorts.js              ← Shorts hiding + redirect
 │   ├── dislikes.js            ← Dislike count fetch + injection
 │   ├── members-filter.js      ← Members-only hiding
-│   ├── pip.js                 ← Picture-in-Picture & shortcut handling
-│   ├── quality.js             ← Resolution preference + reapply
+│   ├── pip.js                 ← Picture-in-Picture logic
+│   ├── pip-injector.js        ← Main-world Media Session bridge
+│   ├── quality.js             ← Resolution preference logic
+│   ├── quality-injector.js    ← Main-world player API bridge
 │   └── content-main.js        ← Entry point, SPA nav, module orchestration
 ├── popup/                     ← Quick-access popup UI
 ├── options/                   ← Full settings page
