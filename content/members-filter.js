@@ -1,11 +1,14 @@
 /**
- * NeatTube — Members-Only Filter
- *
- * Keeps your feed clean by hiding videos locked behind channel memberships.
- *
- * It uses a mix of generic CSS hiding for obvious stuff (like the official badges) 
- * and a heuristic text scanner as a backup. We keep the scanner relatively conservative 
- * so it doesn't accidentally nuke regular videos that just happen to use similar words.
+ * NeatTube — Members-Only Content Filter
+ * 
+ * This module keeps your feed clean by hiding videos that are locked behind 
+ * channel memberships. 
+ * 
+ * We use a "Double Layer" defense:
+ * 1. CSS Layer: Fast, broad hiding of known badge elements and shelf containers.
+ * 2. Heuristic Layer: A text-based scanner that looks for "Members only" strings 
+ *    in overlays and labels, catching content that isn't properly marked in 
+ *    the HTML structure.
  */
 
 /* exported MembersFilterModule */
@@ -16,27 +19,29 @@ const MembersFilterModule = (() => {
   const HIDDEN_CLASS = 'neattube-members-hidden';
 
   /**
-   * Build CSS rules for hiding known members-only selectors.
+   * Generates dynamic CSS rules based on the user's current settings.
    */
   function buildCSS(settings) {
     const rules = [];
 
+    // Hide the actual "Members only" badges visible on thumbnails
     if (settings.hideMembersBadges) {
       rules.push(`${SELECTORS.membersBadges} { display: none !important; }`);
     }
 
+    // Hide entire video rows or shelves marked as membership-only
     if (settings.hideMembersShelves) {
       rules.push(`${SELECTORS.membersShelves} { display: none !important; }`);
     }
 
-    // Generic hidden class for heuristic matches
+    // A generic hidden class we apply to containers caught by the heuristic scanner
     rules.push(`.${HIDDEN_CLASS} { display: none !important; }`);
 
     return rules.join('\n');
   }
 
   /**
-   * Inject or update the members-only filtering stylesheet.
+   * Injects the filtering stylesheet into the document head.
    */
   function injectStyles(settings) {
     let style = document.getElementById(STYLE_ID);
@@ -51,14 +56,17 @@ const MembersFilterModule = (() => {
   }
 
   /**
-   * The fallback scanner. 
-   * Sometimes YouTube uses weird, unmarked text overlays instead of proper HTML badges. 
-   * This crawls through video cards looking for explicit "Members only" text 
-   * and kills the whole card if it's a confirmed match.
+   * The Fallback Scanner.
+   * 
+   * YouTube sometimes uses non-standard text overlays instead of proper HTML 
+   * badges for membership videos. This function crawls through visible video 
+   * cards and checks their badges, labels, and ARIA text for "Members only" 
+   * keywords. If a match is confirmed, we hide the entire container.
    */
   function scanAndHide(settings) {
     if (!settings.hideMembersShelves) return;
 
+    // We check all potential card/shelf containers in the YouTube DOM
     const containerSelectors = [
       'ytd-video-renderer',
       'ytd-rich-item-renderer',
@@ -72,10 +80,10 @@ const MembersFilterModule = (() => {
 
     containerSelectors.forEach((containerSel) => {
       document.querySelectorAll(containerSel).forEach((container) => {
-        // Skip if already hidden
+        // Skip if this container is already hidden to save cycles
         if (container.classList.contains(HIDDEN_CLASS)) return;
 
-        // Check for known badge selectors within this container
+        // First check: Does this container have a known "Members" badge element?
         const hasBadge = container.querySelector(SELECTORS.membersBadges);
         if (hasBadge) {
           container.classList.add(HIDDEN_CLASS);
@@ -83,8 +91,10 @@ const MembersFilterModule = (() => {
           return;
         }
 
-        // Heuristic: check inner text for members-only markers
-        // Only check badge-like elements and overlay text, not the full container
+        // Second check: Heuristic text scan.
+        // We look specifically at badges and overlays where "Members only" text 
+        // usually hides. We don't check the *entire* container to avoid 
+        // accidentally hiding a video just because a user mentioned it in a title.
         const badgeElements = container.querySelectorAll(
           'ytd-badge-supported-renderer, .badge, [class*="badge"], [class*="overlay-text"], [aria-label]'
         );
@@ -109,8 +119,7 @@ const MembersFilterModule = (() => {
 
   return {
     /**
-     * Enable members-only filtering.
-     * @param {Object} settings
+     * Boot up the members filter.
      */
     enable(settings) {
       try {
@@ -122,7 +131,7 @@ const MembersFilterModule = (() => {
     },
 
     /**
-     * Disable members-only filtering — disable styles and remove hidden classes.
+     * Disable the filter and restore visibility to all membership videos.
      */
     disable() {
       try {
@@ -138,8 +147,7 @@ const MembersFilterModule = (() => {
     },
 
     /**
-     * Re-scan on navigation (called by content-main).
-     * @param {Object} settings
+     * Re-runs the filter on navigation events.
      */
     onNavigate(settings) {
       try {

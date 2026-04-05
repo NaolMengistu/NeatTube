@@ -1,11 +1,17 @@
 /**
  * NeatTube — Background Service Worker
- *
- * This runs silently in the background. In Manifest V3, service workers 
- * sleep most of the time. Its one main job is to initialize default settings
- * the first time the extension is installed, so nothing is ever undefined.
+ * 
+ * In Manifest V3, the service worker is ephemeral; it sleeps when idle 
+ * and wakes up only to handle specific events. Its primary role is to:
+ * - Initialize default configuration on the first install.
+ * - Act as a centralized bridge for tasks that require background context.
  */
 
+/**
+ * Baseline configuration. 
+ * These values are persisted to storage ONLY when the extension is first installed 
+ * to ensure that subsequent scripts (Content Scripts & Popup) find a valid state.
+ */
 const DEFAULTS = {
   extensionEnabled: true,
   shortsRemoval: true,
@@ -24,14 +30,22 @@ const DEFAULTS = {
   debugMode: false,
 };
 
+/**
+ * Installation Event Handler
+ * Ensures that storage is NEVER empty upon a fresh start.
+ */
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.storage.sync.set(DEFAULTS);
   }
 });
 
-// Allow other parts of the extension to open the options page.
-// The popup uses this since it can't call openOptionsPage() directly from there.
+/**
+ * Centralized Messaging Hub
+ * Listens for requests from the Popup or Content Scripts. 
+ * Currently handles:
+ * - 'openOptions': Redirects the user to the full extension settings page.
+ */
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'openOptions') {
     chrome.runtime.openOptionsPage();

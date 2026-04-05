@@ -1,12 +1,15 @@
 /**
  * NeatTube — Quality Auto-Selector
- *
- * Forces YouTube to load videos in your preferred quality.
- *
- * We hit it from two sides:
- * 1. Sneak our preference into localStorage so YouTube picks it up natively on a fresh load.
- * 2. Inject a script right into the page's world to call the internal player API directly 
- *    (super useful for SPA navigations where the page doesn't actually reload).
+ * 
+ * This module forces YouTube to playback videos at your preferred resolution.
+ * 
+ * We use a "Two-Pronged" strategy for maximum reliability:
+ * 1. Persistent Layer (localStorage): We inject your preference into YouTube's 
+ *    own settings storage. This ensures the player picks the right quality 
+ *    natively on the very first frame of a cold page load.
+ * 2. Active Layer (Injection): We bridge into the page's main world to talk 
+ *    directly to the 'movie_player' API. This is critical for SPA navigations 
+ *    where the page doesn't reload, but the video changes.
  */
 
 /* exported QualityModule */
@@ -15,6 +18,7 @@
 const QualityModule = (() => {
   const SCRIPT_ID = 'neattube-quality-script';
 
+  // Map user-friendly labels to YouTube's internal quality identifiers
   const QUALITY_MAP = {
     '4320p': 'hd2160',
     '2160p': 'hd2160',
@@ -28,12 +32,12 @@ const QualityModule = (() => {
     'Auto': 'auto',
   };
 
+  // Preference order for "Next Best" fallback logic
   const QUALITY_ORDER = [
     'hd2160', 'hd1440', 'hd1080', 'hd720', 'large', 'medium', 'small', 'tiny',
   ];
 
   let _lastAppliedVideoId = null;
-  let _retryTimer = null;
 
   function prefToQuality(pref) {
     return QUALITY_MAP[pref] || 'hd1080';
@@ -45,9 +49,15 @@ const QualityModule = (() => {
   }
 
   /**
-   * The localStorage hack. 
-   * YouTube reads 'yt-player-quality' when it boots up. By mimicking their data structure, 
-   * we can trick it into using our quality right off the bat before the player even initializes.
+   * The LocalStorage Persistence Hack.
+   * 
+   * YouTube checks 'yt-player-quality' during its boot sequence. By mimicking 
+   * their internal object structure (including timestamps and expiration), we 
+   * can "pre-set" the quality before the player even starts.
+   * 
+   * We also spoof 'yt-player-bandwidth' to a high value. This prevents YouTube's 
+   * "Auto" logic from downscaling the video based on its initial (and often 
+   * pessimistic) connection test.
    */
   function setLocalStorageQuality(preferredQuality, settings) {
     try {
@@ -59,13 +69,13 @@ const QualityModule = (() => {
 
       const qualityData = {
         data: preferredQuality,
-        expiration: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
+        expiration: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 day shelf-life
         creation: Date.now()
       };
 
       window.localStorage.setItem('yt-player-quality', JSON.stringify(qualityData));
 
-      // Spoof a high available bandwidth so YouTube doesn't downscale based on connection detection
+      // Force high bandwidth detection (50Mbps linear/exponential)
       window.localStorage.setItem('yt-player-bandwidth', JSON.stringify({
         data: {
           "exponential": 50000000,
@@ -75,22 +85,25 @@ const QualityModule = (() => {
         creation: Date.now()
       }));
 
-      debugLog(settings, `Quality: set localStorage yt-player-quality to ${preferredQuality}`);
+      debugLog(settings, `Quality: persisted preference "${preferredQuality}" and spoofed bandwidth.`);
     } catch (err) {
-      debugLog(settings, 'Quality: failed to set localStorage', err.message);
+      debugLog(settings, 'Quality: localStorage access failed.', err.message);
     }
   }
 
   /**
-   * The dynamic injector.
-   * Since our extension runs in an isolated world, we can't talk to the `movie_player` API directly.
-   * To get around CSP blocks, we load an external file (quality-injector.js) as a script tag so it 
-   * executes in the page's main world context.
+   * The Main-World Injector.
+   * 
+   * Because our extension lives in an "Isolated World," it cannot touch the 
+   * 'movie_player' object directly. We get around this by creating a <script> 
+   * tag that points to our 'quality-injector.js' file. 
+   * 
+   * This bridges the gap and allows the injector to call the internal Player 
+   * API methods while bypassing Content Security Policy (CSP) restrictions.
    */
   function injectQualityScript(preferredQuality, enableDebug) {
-    // If the extension was reloaded while this tab was still open, the runtime 
-    // context becomes "invalidated". Calling chrome.runtime.getURL() on a dead 
-    // context throws. We check for it here and bail silently instead of crashing.
+    // Safety check: If the extension was updated/reloaded, our current 
+    // runtime context is dead. We bail here to avoid throwing errors.
     if (!chrome.runtime?.id) return;
 
     const existing = document.getElementById(SCRIPT_ID);
@@ -99,6 +112,8 @@ const QualityModule = (() => {
     const script = document.createElement('script');
     script.id = SCRIPT_ID;
     script.src = chrome.runtime.getURL('content/quality-injector.js');
+
+    // Pass current configuration to the injector via data attributes
     script.dataset.preferred = preferredQuality;
     script.dataset.debug = enableDebug ? 'true' : 'false';
     script.dataset.order = JSON.stringify(QUALITY_ORDER);
@@ -107,6 +122,9 @@ const QualityModule = (() => {
   }
 
   return {
+    /**
+     * Start the quality enforcement process.
+     */
     enable(settings) {
       try {
         if (!window.location.pathname.startsWith('/watch')) return;
@@ -114,21 +132,23 @@ const QualityModule = (() => {
         const videoId = getCurrentVideoId();
         if (!videoId) return;
 
+        // Skip if we've already handled this specific video instance
         if (videoId === _lastAppliedVideoId && !settings.reapplyQuality) return;
         _lastAppliedVideoId = videoId;
 
         const preferred = prefToQuality(settings.preferredQuality);
 
-        // Step 1: stamp the preference into localStorage so fresh page loads pick it up natively
+        // Apply both prongs of the strategy
         setLocalStorageQuality(preferred, settings);
-
-        // Step 2: inject the injector script to apply quality to whatever's already playing
         injectQualityScript(preferred, settings.debugMode);
       } catch (err) {
         console.error('[NeatTube] Quality module error:', err);
       }
     },
 
+    /**
+     * Stop quality enforcement and cleanup.
+     */
     disable() {
       try {
         _lastAppliedVideoId = null;
@@ -139,6 +159,9 @@ const QualityModule = (() => {
       }
     },
 
+    /**
+     * Handle transitions between videos on YouTube.
+     */
     onNavigate(settings) {
       try {
         _lastAppliedVideoId = null;

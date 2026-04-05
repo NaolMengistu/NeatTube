@@ -1,15 +1,21 @@
 /**
- * NeatTube — Picture-in-Picture Module
+ * NeatTube — Picture-in-Picture (PiP) Module
  *
- * Pops videos out into a floating PiP window. Press Alt+P and the
- * best candidate video detaches itself — scored by visible area,
- * with priority given to actively playing video over paused ones.
- * Press Alt+P again and it snaps back.
+ * This module handles two distinct ways to trigger Picture-in-Picture:
  *
- * We listen for the keyboard shortcut directly here in the content world rather 
- * than routing it through the background service worker. Going through the service 
- * worker caused "Receiving end does not exist" crashes whenever YouTube navigated 
- * between pages (SPA behavior) and the old content script context was torn down.
+ * 1. Manual Toggle (Alt+P): 
+ *    Triggered via a keyboard listener. Since a keypress counts as a valid 
+ *    "user gesture," we can call requestPictureInPicture() directly from this 
+ *    content script without the browser blocking it.
+ *
+ * 2. Automatic PiP (Tab Switching): 
+ *    This is trickier. Modern browsers require a "Media Session" handler to 
+ *    allow PiP without a direct click/keypress. Because extensions run in an 
+ *    "isolated world," their navigator.mediaSession object is invisible to 
+ *    the browser's native PiP logic. 
+ * 
+ *    To fix this, we inject 'pip-injector.js' into the page's "Main World" 
+ *    (the actual YouTube JS context).
  */
 
 /* exported PipModule */
@@ -19,25 +25,24 @@ const PipModule = (() => {
   let _settings = null;
   let _keydownBound = false;
 
+  const INJECTOR_ID = 'neattube-pip-injector';
+
   /**
-   * Finds the best candidate video on the page to pop into PiP.
-   * Does a single pass scoring videos by their visible screen area,
-   * while giving a massive priority boost to videos that are actively playing.
-   * This ensures we always grab the main active player, not a paused ad or background tile.
+   * Scans the page for the most relevant video to pop out.
+   * It calculates a surface-area score and gives a massive bonus to 
+   * videos that are actually playing.
    */
   function findTargetVideo() {
     const candidate = { video: null, score: -1 };
 
     document.querySelectorAll('video').forEach(v => {
-      // Skip videos that haven't loaded or explicitly block PiP
+      // Skip videos that aren't loaded or have PiP explicitly blocked by the site
       if (v.readyState === 0 || v.disablePictureInPicture) return;
 
       const rect = v.getBoundingClientRect();
-
-      // Must be visible in the viewport
       if (rect.width === 0 || rect.height === 0) return;
 
-      // Prefer videos that are actually playing over paused ones
+      // Prioritize the playing video above all else
       const playingBonus = v.paused ? 0 : 100000;
       const score = (rect.width * rect.height) + playingBonus;
 
@@ -51,9 +56,8 @@ const PipModule = (() => {
   }
 
   /**
-   * The main PiP toggle. If PiP is already active, exit it. Otherwise, find the 
-   * primary video and pop it out. We check document.pictureInPictureElement first 
-   * so pressing Alt+P always does the intuitive thing regardless of state.
+   * The core manual toggle logic. If we're already in PiP, we close it.
+   * Otherwise, we find the best video on screen and request PiP entry.
    */
   async function togglePip() {
     if (!_settings || !_settings.pictureInPicture) return;
@@ -83,8 +87,9 @@ const PipModule = (() => {
   }
 
   /**
-   * Listens for Alt+P using a capture-phase handler so we intercept it before 
-   * YouTube's own keyboard shortcuts get a chance to fire.
+   * Listener for the Alt+P shortcut. We use the 'capture' phase (true)
+   * to ensure we catch the key combination before YouTube's own 
+   * internal keyboard shortcuts can interfere.
    */
   function handleKeydown(e) {
     if (e.altKey && (e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey) {
@@ -94,41 +99,67 @@ const PipModule = (() => {
   }
 
   /**
-   * Registers (or clears) the mediaSession 'enterpictureinpicture' handler.
-   * When enabled, the browser will auto-PiP the main video when you switch tabs. 
-   * This is opt-in and off by default since it changes tab-switching behavior.
+   * Injects 'pip-injector.js' into YouTube's main JavaScript context.
+   * This is necessary because the native 'enterpictureinpicture' action 
+   * MUST be registered in the same JS world as the player to work for 
+   * automatic tab-switch PiP.
    */
-  function setupAutoPip(enable) {
-    if (!('mediaSession' in navigator)) return;
-    try {
-      if (enable) {
-        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => {
-          const video = findTargetVideo();
-          if (video && !document.pictureInPictureElement) {
-            video.requestPictureInPicture().catch(e => debugLog(_settings, 'Auto PiP error', e.message));
-          }
-        });
-        debugLog(_settings, 'PiP: Auto-PiP enabled');
-      } else {
+  function injectAutoPipScript(enableDebug) {
+    // If the extension context is lost (e.g., after an update), bail safe
+    if (!chrome.runtime?.id) return;
+
+    const existing = document.getElementById(INJECTOR_ID);
+    if (existing) existing.remove();
+
+    const script = document.createElement('script');
+    script.id = INJECTOR_ID;
+    script.src = chrome.runtime.getURL('content/pip-injector.js');
+    script.dataset.debug = enableDebug ? 'true' : 'false';
+
+    document.documentElement.appendChild(script);
+  }
+
+  /**
+   * Cleans up the injector and explicitly nulls the handler in the 
+   * main world. This ensures the feature turns off immediately when 
+   * toggled in settings, without requiring a page refresh.
+   */
+  function removeAutoPipScript() {
+    const existing = document.getElementById(INJECTOR_ID);
+    if (existing) existing.remove();
+
+    if (!chrome.runtime?.id) return;
+
+    // We inject a tiny one-off script to clear the main-world action handler
+    const clearScript = document.createElement('script');
+    clearScript.textContent = `
+      if ('mediaSession' in navigator) {
         navigator.mediaSession.setActionHandler('enterpictureinpicture', null);
-        debugLog(_settings, 'PiP: Auto-PiP disabled');
       }
-    } catch (err) {
-      // mediaSession API isn't available everywhere, silently skip
-      debugLog(_settings, 'PiP: mediaSession unavailable', err.message);
-    }
+    `;
+    document.documentElement.appendChild(clearScript);
+    clearScript.remove();
   }
 
   return {
     enable(settings) {
       try {
         _settings = settings;
-        // Only attach the listener once — it survives SPA navigations fine
+
+        // Initialize keyboard shortcut (Alt+P)
         if (!_keydownBound) {
           document.addEventListener('keydown', handleKeydown, true);
           _keydownBound = true;
         }
-        setupAutoPip(settings.autoPip);
+
+        // Handle the Auto-PiP state
+        if (settings.autoPip) {
+          injectAutoPipScript(settings.debugMode);
+          debugLog(settings, 'PiP: Auto-PiP injector loaded (Media Session)');
+        } else {
+          removeAutoPipScript();
+        }
+
         debugLog(settings, 'PiP: Module enabled');
       } catch (err) {
         console.error('[NeatTube] PiP module error:', err);
@@ -141,15 +172,17 @@ const PipModule = (() => {
           document.removeEventListener('keydown', handleKeydown, true);
           _keydownBound = false;
         }
-        setupAutoPip(false);
+        removeAutoPipScript();
         _settings = null;
       } catch (err) {
         console.error('[NeatTube] PiP disable error:', err);
       }
     },
 
+    /**
+     * Called by content-main.js on YouTube SPA navigation events.
+     */
     onNavigate(settings) {
-      // Refresh the settings reference on every navigation so the hotkey keeps working
       _settings = settings;
       if (settings.pictureInPicture) {
         this.enable(settings);

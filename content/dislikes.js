@@ -1,17 +1,17 @@
 /**
  * NeatTube — Dislike Count Restorer
- *
- * Grabs the community dislike estimate from the Return YouTube Dislike API 
- * and surgically injects it back into the dislike button.
- *
- * The tricky part: YouTube's SPA navigation and weird web components 
- * (like dislike-button-view-model) meant we had to use a MutationObserver to 
- * catch the exact millisecond the button renders. We also have to clone the like 
- * button's text node and mess with the CSS classes, otherwise YouTube's styling 
- * just hides our injected text entirely.
- *
- * We also map a clean CSS ratio bar that tracks exact pixel boundaries
- * of the Like/Dislike pills to survive window resizes securely.
+ * 
+ * This module restores the community dislike count using the Return YouTube Dislike (RYD) API.
+ * 
+ * Technical Challenges:
+ * 1. DOM Surgery: YouTube's modern UI uses "view-models" that frequently wipe or reset 
+ *    button contents. We use a MutationObserver to catch these resets and re-inject.
+ * 2. Visual Parity: To ensure the injected count looks native, we clone the internal 
+ *    HTML structure of the existing Like button.
+ * 3. Race Conditions: YouTube's SPA navigation is fast. We use AbortControllers and 
+ *    Video ID tracking to ensure we don't inject stale data into the wrong video.
+ * 4. Geometry: The "Ratio Bar" is mapped to the exact pixel boundaries of the Like/Dislike 
+ *    pills so it remains perfectly aligned through window resizes.
  */
 
 /* exported DislikesModule */
@@ -24,7 +24,7 @@ const DislikesModule = (() => {
   const BAR_ID = 'neattube-ratio-bar-container';
   const STYLE_ID = 'neattube-dislike-styles';
 
-  // ── State ─────────────────────────────────────────────────
+  // ── Internal State ───────────────────────────────────────
   let _currentVideoId = null;
   let _abortController = null;
   let _domObserver = null;
@@ -32,14 +32,18 @@ const DislikesModule = (() => {
   let _cachedDislikes = null;
   let _boundLikeBtn = null;
   let _boundDislikeBtn = null;
-  // User's local interaction state for the current video.
-  // We track this so clicking like/dislike updates the count immediately
-  // without waiting for another API round-trip.
+
+  // We track the user's interaction state locally so the UI 
+  // responds instantly to clicks (optimistic updates).
   const STATE = { NEUTRAL: 0, LIKED: 1, DISLIKED: 2 };
   let _userState = STATE.NEUTRAL;
 
-  // ── Styles (injected once) ────────────────────────────────
+  // ── CSS Injection ────────────────────────────────────────
 
+  /**
+   * Injects the required CSS for the ratio bar and click animations.
+   * We use !important on overflow to prevent YouTube's container clipping.
+   */
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
@@ -79,7 +83,7 @@ const DislikesModule = (() => {
         will-change: width;
       }
 
-      /* Dislike button click animation */
+      /* Native-feeling pulse animations for interaction feedback */
       @keyframes neattube-dislike-pulse {
         0%   { transform: scale(1); }
         30%  { transform: scale(1.25); }
@@ -107,8 +111,11 @@ const DislikesModule = (() => {
     if (el) el.remove();
   }
 
-  // ── Helpers ───────────────────────────────────────────────
+  // ── Utility Helpers ──────────────────────────────────────
 
+  /**
+   * Extracts the unique video ID from either standard watch URLs or Shorts handles.
+   */
   function getVideoId() {
     const watchMatch = window.location.href.match(/[?&]v=([a-zA-Z0-9_-]+)/);
     if (watchMatch) return watchMatch[1];
@@ -117,10 +124,13 @@ const DislikesModule = (() => {
     return null;
   }
 
+  /**
+   * Formats numbers into a clean "10.5K" or "1.2M" format.
+   * Leverages Intl.NumberFormat for locale-aware short form.
+   */
   function formatCount(num) {
     if (num === null || num === undefined) return '';
-    // Clamp to 0 if something goes negative from rapid toggling
-    if (num < 0) num = 0;
+    if (num < 0) num = 0; // Sanity check for rapid toggling
     try {
       return new Intl.NumberFormat('en', {
         notation: 'compact',
@@ -128,6 +138,7 @@ const DislikesModule = (() => {
         maximumFractionDigits: 1,
       }).format(num);
     } catch (_e) {
+      // Manual fallback if Intl is unsupported (very old browser versions)
       if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
       if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
       if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
@@ -135,8 +146,13 @@ const DislikesModule = (() => {
     }
   }
 
-  // ── API ───────────────────────────────────────────────────
+  // ── Data Fetching ────────────────────────────────────────
 
+  /**
+   * Retrieves data from the RYD API.
+   * We use an AbortController to cancel any in-flight requests if 
+   * the user navigates to another video before we finish.
+   */
   async function fetchVotes(videoId, settings) {
     if (_abortController) _abortController.abort();
     _abortController = new AbortController();
@@ -156,14 +172,19 @@ const DislikesModule = (() => {
     }
   }
 
-  // ── DOM: Finding buttons ──────────────────────────────────
+  // ── DOM Traversal ────────────────────────────────────────
 
+  /**
+   * Locates the Like/Dislike buttons. YouTube has multiple button variants
+   * (Standard, ViewModels, Legacy Actions). This function walks through 
+   * them in order of priority.
+   */
   function findButtons() {
-    // Primary approach: Segmented buttons in new UI
+    // Priority 1: Modern Segmented Buttons (found on most current Watch pages)
     const segments = document.querySelectorAll('ytd-segmented-like-dislike-button-renderer');
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
-      if (seg.offsetParent) { // Must be visible
+      if (seg.offsetParent) { // Skip hidden/unrendered panels
         const dislikeVM = seg.querySelector('dislike-button-view-model');
         const likeVM = seg.querySelector('like-button-view-model');
 
@@ -176,7 +197,7 @@ const DislikesModule = (() => {
           };
         }
 
-        // Fallback for segmented without view-model
+        // Fallback for segmented layouts that don't use VM wrappers
         const buttons = seg.querySelectorAll('button');
         if (buttons.length >= 2) {
           return {
@@ -189,12 +210,11 @@ const DislikesModule = (() => {
       }
     }
 
-    // Secondary fallback: Old UI actions menu
+    // Priority 2: Legacy Actions/Menu (Mobile or old UI versions)
     const ariaBtns = document.querySelectorAll('#actions button[aria-label*="islike"]');
     for (let i = 0; i < ariaBtns.length; i++) {
       const btn = ariaBtns[i];
       if (btn.offsetParent) {
-        // If we find exactly two buttons with 'islike' in aria-label, assume [0]=like, [1]=dislike
         const parent = btn.closest('#actions, ytd-menu-renderer');
         if (parent) {
           const allActionBtns = parent.querySelectorAll('button[aria-label*="like" i]');
@@ -213,32 +233,33 @@ const DislikesModule = (() => {
     return null;
   }
 
-  // ── DOM: Detect current YouTube like/dislike state ─────────
-
+  /**
+   * Checks YouTube's internal state to see if the user has already 
+   * interacted with the Like/Dislike buttons.
+   */
   function detectState() {
     const buttons = findButtons();
     if (!buttons) return STATE.NEUTRAL;
 
     const { likeBtn, dislikeBtn } = buttons;
 
-    // YouTube uses aria-pressed="true" on the active button
+    // Check for ARIA attributes (most reliable)
     if (likeBtn?.getAttribute('aria-pressed') === 'true') return STATE.LIKED;
     if (dislikeBtn?.getAttribute('aria-pressed') === 'true') return STATE.DISLIKED;
 
-    // Fallback: class-based detection
+    // Last-ditch check for CSS active classes
     if (likeBtn?.classList.contains('style-default-active')) return STATE.LIKED;
     if (dislikeBtn?.classList.contains('style-default-active')) return STATE.DISLIKED;
 
     return STATE.NEUTRAL;
   }
 
-  // ── DOM: Dislike count injection ──────────────────────────
+  // ── DOM Injection ────────────────────────────────────────
 
   function removeDislikeCount() {
     document.querySelectorAll(`[${RYD_LABEL_ATTR}]`).forEach((el) => {
       el.remove();
     });
-    // Clean up our style overrides so the button returns to normal
     const buttons = findButtons();
     if (buttons?.dislikeBtn) {
       buttons.dislikeBtn.removeAttribute(RYD_VALUE_ATTR);
@@ -247,6 +268,12 @@ const DislikesModule = (() => {
     }
   }
 
+  /**
+   * Surgical injection of the dislike count.
+   * 1. Swaps the button's class to the 'leading-icon' variant to allow text rendering.
+   * 2. Clones the precisely formatted internal structure of the Like button.
+   * 3. Syncs the text content.
+   */
   function injectCount(dislikes, settings) {
     const buttons = findButtons();
     if (!buttons || !buttons.dislikeBtn || !buttons.likeBtn) return false;
@@ -254,36 +281,31 @@ const DislikesModule = (() => {
     const { dislikeBtn, likeBtn, dislikeContainer } = buttons;
     const formatted = formatCount(dislikes);
 
-    // Same count, same node still in place — nothing to do.
+    // Skip if we've already injected this exact value properly
     if (dislikeBtn.getAttribute(RYD_VALUE_ATTR) === formatted) {
-      // If YouTube wiped our DOM node during a partial render, we must re-inject 
-      // even if the value attribute is ostensibly correct.
       if (dislikeBtn.querySelector(`[${RYD_LABEL_ATTR}]`)) return true;
     }
 
-    // Remove our previous injection if one exists (handles re-renders and count updates)
     const existing = dislikeBtn.querySelector(`[${RYD_LABEL_ATTR}]`);
     if (existing) existing.remove();
 
-    // YouTube's default dislike button is icon-only. We need to switch its class
-    // to the icon+label variant, otherwise there's nowhere for our text to render.
+    // Transform from "icon button" (square) to "text button" (rectangle with icon)
     dislikeBtn.classList.remove('yt-spec-button-shape-next--icon-button');
     dislikeBtn.classList.add('yt-spec-button-shape-next--icon-leading');
 
-    // YouTube uses an "is-empty" attribute to collapse button padding when there's no text.
-    // Remove it so the button expands to fit our injected count.
+    // Force layouts to collapse empty flags so the button expands properly
     if (dislikeBtn.hasAttribute('is-empty')) dislikeBtn.removeAttribute('is-empty');
     if (dislikeContainer && dislikeContainer.hasAttribute('is-empty')) dislikeContainer.removeAttribute('is-empty');
 
-    // Clone the text node structure from the like button rather than building from scratch.
-    // YouTube changes its internal HTML layout frequently, so copying from the like button
-    // guarantees we always get the exact same structure they're using right now.
+    // We clone the like button's text wrapper. This ensures we inherit all of 
+    // YouTube's complex typography classes and role attributes.
     const likeTextNode = likeBtn.querySelector('.yt-spec-button-shape-next__button-text-content, [class*="button-text"]');
 
     if (likeTextNode) {
       const textNodeClone = likeTextNode.cloneNode(true);
       textNodeClone.setAttribute(RYD_LABEL_ATTR, 'true');
 
+      // Ensure the clone has a standard text span
       if (textNodeClone.querySelector("span[role='text']") === null) {
         const span = document.createElement('span');
         span.setAttribute('role', 'text');
@@ -309,26 +331,27 @@ const DislikesModule = (() => {
     return false;
   }
 
-  // ── DOM: Ratio bar ────────────────────────────────────────
+  // ── Ratio Bar Geometry ───────────────────────────────────
 
   function removeRatioBar() {
     document.querySelectorAll(`#${BAR_ID}`).forEach((bar) => bar.remove());
-
     document.querySelectorAll('.neattube-ratio-host').forEach((el) => {
       el.classList.remove('neattube-ratio-host');
     });
   }
 
+  /**
+   * Locates the optimal parent element to host our ratio bar.
+   * We look for the tight internal wrapper that moves with the buttons.
+   */
   function ensureRatioBarHost(buttons) {
     let host = buttons?.segmentContainer;
     if (!host) return null;
 
-    // Prefer the tight visual wrapper so the bar doesn't bleed too wide
     const innerWrapper = host.querySelector('#segmented-buttons-wrapper') || host.querySelector('yt-smartimation');
     if (innerWrapper) {
       host = innerWrapper;
-    } 
-    // Fallback block specific to the old sprawling action menu layout
+    }
     else if (host.matches('ytd-menu-renderer') || host.id === 'actions') {
       host = host.querySelector('#top-level-buttons-computed, .slim-video-action-bar-actions') || host;
     }
@@ -352,6 +375,12 @@ const DislikesModule = (() => {
     return container;
   }
 
+  /**
+   * Measures and aligns the ratio bar.
+   * Strategy: We measure the absolute pixel boundaries of the Like and Dislike 
+   * pills, then map those coordinates onto our relative host. This ensures 
+   * the bar perfectly spans the visual gap between the two pills.
+   */
   function renderRatioBar(likes, dislikes) {
     const buttons = findButtons();
     if (!buttons?.segmentContainer) return;
@@ -364,10 +393,7 @@ const DislikesModule = (() => {
 
     const container = ensureRatioBar(host);
 
-    // ── Snap to visual bounds ──
-    // Measure strictly to the visual buttons and map absolute CSS coordinates ONCE.
-    // Because we anchor to a relative wrapper, those static coordinates will elegantly
-    // ride along any window resizes without ever forcing another JS recalculation.
+    // Map visual bounds to relative CSS positioning
     const likeEl = buttons.segmentContainer.querySelector('like-button-view-model') || buttons.likeBtn.closest('button') || buttons.likeBtn;
     const dislikeEl = buttons.segmentContainer.querySelector('dislike-button-view-model') || buttons.dislikeBtn.closest('button') || buttons.dislikeBtn;
 
@@ -390,33 +416,34 @@ const DislikesModule = (() => {
     }
   }
 
-  // ── Click handling ────────────────────────────────────────
+  // ── Interaction Logic ────────────────────────────────────
 
   function playAnimation(button, type) {
     if (!button) return;
     const cls = type === 'dislike' ? 'neattube-dislike-animate' : 'neattube-like-animate';
-    // Find the icon inside the button to animate
     const icon = button.querySelector('yt-icon, .yt-spec-button-shape-next__icon') || button;
     icon.classList.remove(cls);
-    // Force reflow so re-adding the class restarts the animation
-    void icon.offsetWidth;
+    void icon.offsetWidth; // Force reflow
     icon.classList.add(cls);
     icon.addEventListener('animationend', () => icon.classList.remove(cls), { once: true });
   }
 
+  /**
+   * Optimistic update: When the user clicks Dislike, we calculate the 
+   * new counts instantly based on the current state, rather than 
+   * waiting for a fresh API call.
+   */
   function onDislikeClicked(settings) {
     if (_cachedDislikes === null || _cachedLikes === null) return;
 
     const prevState = _userState;
     _userState = detectState();
 
-    // If YouTube flipped to DISLIKED state, the user just pressed dislike
     if (_userState === STATE.DISLIKED && prevState !== STATE.DISLIKED) {
       _cachedDislikes++;
       if (prevState === STATE.LIKED) _cachedLikes--;
       playAnimation(findButtons()?.dislikeBtn, 'dislike');
     }
-    // If YouTube went from DISLIKED back to NEUTRAL, user un-disliked
     else if (_userState === STATE.NEUTRAL && prevState === STATE.DISLIKED) {
       _cachedDislikes--;
     }
@@ -446,8 +473,11 @@ const DislikesModule = (() => {
     renderRatioBar(_cachedLikes, _cachedDislikes);
   }
 
-  // We use requestAnimationFrame to let YouTube's own handler
-  // update the aria-pressed attribute before we read the state.
+  /**
+   * Timing helper. We wait through two animation frames to ensure 
+   * YouTube's internal state updates (like aria-pressed) finish before 
+   * we try to read them.
+   */
   function afterYoutubeSettles(fn) {
     requestAnimationFrame(() => {
       requestAnimationFrame(fn);
@@ -464,7 +494,6 @@ const DislikesModule = (() => {
 
     unbindClickListeners();
 
-    // Store handler refs for cleanup
     dislikeBtn._neattubeDislike = () => afterYoutubeSettles(() => onDislikeClicked(settings));
     likeBtn._neattubeLike = () => afterYoutubeSettles(() => onLikeClicked(settings));
 
@@ -485,11 +514,12 @@ const DislikesModule = (() => {
       _boundLikeBtn.removeEventListener('click', _boundLikeBtn._neattubeLike);
       delete _boundLikeBtn._neattubeLike;
     }
-    
+
     _boundLikeBtn = null;
     _boundDislikeBtn = null;
   }
-  // ── Observer ──────────────────────────────────────────────
+
+  // ── DOM Observer (The Safety Net) ─────────────────────────
 
   let _pendingInjectionFrame = 0;
 
@@ -501,6 +531,10 @@ const DislikesModule = (() => {
     cancelAnimationFrame(_pendingInjectionFrame);
   }
 
+  /**
+   * Debounced re-injection. We use requestAnimationFrame to ensure 
+   * we don't hammer the DOM during rapid changes.
+   */
   function scheduleInjection(settings) {
     cancelAnimationFrame(_pendingInjectionFrame);
 
@@ -510,7 +544,7 @@ const DislikesModule = (() => {
       if (injectCount(_cachedDislikes, settings)) {
         renderRatioBar(_cachedLikes, _cachedDislikes);
         bindClickListeners(settings);
-        stopObserver();
+        stopObserver(); // Success - we can stop watching until the next navigation
       }
     });
   }
@@ -526,9 +560,10 @@ const DislikesModule = (() => {
     _domObserver.observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ['is-empty', 'class'] });
   }
 
-  // ── Main flow ─────────────────────────────────────────────
+  // ── Orchestration ────────────────────────────────────────
 
   async function startDislikeFlow(videoId, settings) {
+    // Reset local state for the new video
     _cachedLikes = null;
     _cachedDislikes = null;
     _userState = STATE.NEUTRAL;
@@ -545,18 +580,18 @@ const DislikesModule = (() => {
     _cachedDislikes = votes.dislikes;
     _userState = detectState();
 
-    // Try the fastest possible zero-latency injection first
+    // Fast injection: Try to hit the DOM immediately
     if (injectCount(_cachedDislikes, settings)) {
       renderRatioBar(_cachedLikes, _cachedDislikes);
       bindClickListeners(settings);
       return;
     }
 
-    // If the DOM is lagging behind the API call, boot up the observer
+    // Long-tail strategy: If the button isn't ready yet, start the observer
     setupObserverForInjection(settings);
   }
 
-  // ── Public API ────────────────────────────────────────────
+  // ── Public Interface ──────────────────────────────────────
 
   return {
     enable(settings) {
@@ -564,6 +599,7 @@ const DislikesModule = (() => {
         const videoId = getVideoId();
         if (!videoId) return;
 
+        // Skip if we're already locked into this video and everything is rendered
         if (videoId === _currentVideoId) {
           const buttons = findButtons();
           const btn = buttons?.dislikeBtn;

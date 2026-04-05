@@ -1,11 +1,18 @@
 /**
- * NeatTube — Popup Menu Logic
- *
- * Powers the small menu that appears when you click the extension icon.
- * Reads your saved settings from Chrome sync storage, checks the matching
- * toggle switches, then saves any changes you make immediately.
+ * NeatTube — Quick-Toggle Popup Logic
+ * 
+ * This script powers the "Quick Actions" menu. It allows users to flip 
+ * the most common switches without leaving their current YouTube tab. 
+ * 
+ * It synchronizes 1:1 with Chrome's synced storage, ensuring that 
+ * changes made here are immediately reflected in the main options page 
+ * and across all active YouTube tabs.
  */
 
+/**
+ * Baseline configuration. 
+ * IMPORTANT: These must match the keys in C:\Users\Legion\Documents\GitHub\NeatTube\content\settings.js
+ */
 const DEFAULTS = {
   extensionEnabled: true,
   shortsRemoval: true,
@@ -22,10 +29,13 @@ const DEFAULTS = {
   preferredQuality: '1080p',
   reapplyQuality: true,
   debugMode: false,
+  theme: 'system',
 };
 
-// The subset of toggle IDs that live in the popup.
-// These map 1:1 to storage keys, making bind/read code trivially simple.
+/**
+ * The specific subset of toggles exposed in the popup. 
+ * We use a loop-based approach to bind these to their storage counterparts.
+ */
 const TOGGLE_IDS = [
   'extensionEnabled',
   'shortsRemoval',
@@ -35,36 +45,71 @@ const TOGGLE_IDS = [
   'autoQuality',
 ];
 
+/**
+ * Initialization Sequence
+ */
 document.addEventListener('DOMContentLoaded', async () => {
   const settings = await loadSettings();
+
+  // Hydrate the UI with current saved state
   applyToUI(settings);
+
+  // Connect listeners for user interactions
   bindEvents();
 });
 
-// Grab everything from sync storage, filling in DEFAULTS for anything not yet saved.
+/**
+ * Promise-based wrapper for fetching user configuration.
+ */
 async function loadSettings() {
   return new Promise((resolve) => {
     chrome.storage.sync.get(DEFAULTS, resolve);
   });
 }
 
-// Push current settings values into the popup UI checkboxes and dropdown.
+/**
+ * applyTheme — mirrors the selected theme onto <html> so CSS variables
+ * automatically pull the right colour palette.
+ * @param {'dark'|'light'|'system'} theme
+ */
+function applyTheme(theme) {
+  const valid = ['dark', 'light', 'system'];
+  document.documentElement.setAttribute(
+    'data-theme',
+    valid.includes(theme) ? theme : 'system'
+  );
+}
+
+/**
+ * UI Hydration logic. 
+ * Sets checkboxes, dropdowns, and theme-attributes based on the 
+ * current snapshot of the configuration.
+ */
 function applyToUI(settings) {
+  // Set the theme first to avoid visual flickering
+  applyTheme(settings.theme || DEFAULTS.theme);
+
+  // Flip the specific toggle switches
   TOGGLE_IDS.forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.checked = !!settings[id];
   });
 
+  // Set the resolution dropdown value
   const selectEl = document.getElementById('preferredQuality');
   if (selectEl && settings.preferredQuality) {
     selectEl.value = settings.preferredQuality;
   }
 
+  // Update the visual enabled/disabled state of the feature list
   updateDisabledState(settings.extensionEnabled);
 }
 
-// When the master toggle is off, visually dim every other row so it's 
-// obvious the extension isn't doing anything.
+/**
+ * Master Switch Feedback
+ * If the extension is turned off globally, we "dim" the entire 
+ * feature section to clearly signal it's inactive.
+ */
 function updateDisabledState(enabled) {
   const section = document.getElementById('features-section');
   if (section) {
@@ -72,9 +117,11 @@ function updateDisabledState(enabled) {
   }
 }
 
-// Wire up every toggle and the quality dropdown to save immediately on change.
+/**
+ * Interaction Event Binding
+ */
 function bindEvents() {
-  // Toggle change handlers
+  // Handle Toggle Switch clicks
   TOGGLE_IDS.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -82,13 +129,14 @@ function bindEvents() {
       const update = { [id]: el.checked };
       chrome.storage.sync.set(update);
 
+      // Special case: Master Switch affects UI dimming instantly
       if (id === 'extensionEnabled') {
         updateDisabledState(el.checked);
       }
     });
   });
 
-  // Quality selector handler
+  // Handle Quality Dropdown changes
   const selectEl = document.getElementById('preferredQuality');
   if (selectEl) {
     selectEl.addEventListener('change', () => {
@@ -96,18 +144,22 @@ function bindEvents() {
     });
   }
 
-  // Open full options page
+  // Handle the "Full Settings" deep-link
   const optionsLink = document.getElementById('open-options');
   if (optionsLink) {
     optionsLink.addEventListener('click', (e) => {
       e.preventDefault();
       chrome.runtime.openOptionsPage();
-      window.close();
+      window.close(); // Close popup after opening options
     });
   }
 }
 
-// Keep the popup in sync if the options page (or another popup instance) changes something.
+/**
+ * Cross-Context Synchronization
+ * If settings change (e.g., from an open Options tab), we refresh 
+ * the popup UI in real-time.
+ */
 chrome.storage.onChanged.addListener((_changes, area) => {
   if (area !== 'sync') return;
   loadSettings().then(applyToUI);

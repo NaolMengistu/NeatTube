@@ -1,11 +1,10 @@
 /**
- * NeatTube — Main Content Script
+ * NeatTube — Core Orchestrator
  *
- * The brain of the operation. This script boots up when you open YouTube,
- * figures out what settings you have enabled, and turns on the right modules.
- *
- * It also listens for YouTube's custom SPA (Single Page Application) events 
- * so it knows exactly when you click a video without the page actually reloading.
+ * This is the entry point for the extension. Its role is to:
+ * 1. Load the user's saved preferences.
+ * 2. Initialize and toggle features (Shorts, Dislikes, PiP, etc.) based on those settings.
+ * 3. Keep everything in sync as the user navigates YouTube's Single Page App (SPA).
  */
 
 /* global NeatTubeSettings, debugLog, ShortsModule, DislikesModule, MembersFilterModule, QualityModule, PipModule */
@@ -18,8 +17,12 @@
   let debounceTimer = null;
   const DEBOUNCE_MS = 500;
 
-  // ── Boot sequence ────────────────────────────────────────
+  // ── Initialization ────────────────────────────────────────
 
+  /**
+   * Boots the extension. We grab the settings first, then wire up 
+   * the modules and listeners that keep the extension alive.
+   */
   async function boot() {
     try {
       currentSettings = await NeatTubeSettings.load();
@@ -34,17 +37,20 @@
     }
   }
 
-  // ── Module orchestration ─────────────────────────────────
+  // ── Module Management ────────────────────────────────────
 
-  // Reads the current settings and kicks off every feature module.
-  // Each feature runs in its own try/catch so one broken module doesn't crash the rest.
+  /**
+   * Evaluates each feature module against current settings.
+   * We wrap each module in a try/catch block so a single bug in 
+   * one feature (like Dislikes) doesn't crash the entire extension.
+   */
   function applyAllModules(settings) {
     if (!settings.extensionEnabled) {
       disableAllModules();
       return;
     }
 
-    // Shorts
+    // Shorts Removal
     try {
       if (settings.shortsRemoval) {
         ShortsModule.enable(settings);
@@ -55,7 +61,7 @@
       console.error('[NeatTube] Shorts apply error:', err);
     }
 
-    // Dislikes
+    // Dislike Counts
     try {
       if (settings.dislikeCount) {
         DislikesModule.enable(settings);
@@ -66,7 +72,7 @@
       console.error('[NeatTube] Dislikes apply error:', err);
     }
 
-    // Members filter
+    // Members Filter
     try {
       if (settings.membersOnlyFilter) {
         MembersFilterModule.enable(settings);
@@ -88,7 +94,7 @@
       console.error('[NeatTube] PiP apply error:', err);
     }
 
-    // Quality
+    // Video Quality
     try {
       if (settings.autoQuality) {
         QualityModule.enable(settings);
@@ -100,20 +106,24 @@
     }
   }
 
-  // Hard-off switch. Called when the master "Extension ON" toggle is turned off.
-  // We try to disable every module, but swallow errors silently so one bad
-  // teardown doesn't leave others running.
+  /**
+   * The "emergency stop." Used when the user disables the 
+   * extension globally via the master toggle.
+   */
   function disableAllModules() {
-    try { ShortsModule.disable(); } catch (e) { /* silent */ }
-    try { DislikesModule.disable(); } catch (e) { /* silent */ }
-    try { MembersFilterModule.disable(); } catch (e) { /* silent */ }
-    try { PipModule.disable(); } catch (e) { /* silent */ }
-    try { QualityModule.disable(); } catch (e) { /* silent */ }
+    try { ShortsModule.disable(); } catch (e) { /* suppressed */ }
+    try { DislikesModule.disable(); } catch (e) { /* suppressed */ }
+    try { MembersFilterModule.disable(); } catch (e) { /* suppressed */ }
+    try { PipModule.disable(); } catch (e) { /* suppressed */ }
+    try { QualityModule.disable(); } catch (e) { /* suppressed */ }
     debugLog(currentSettings, 'Main: all modules disabled');
   }
 
-  // YouTube fires its own "navigate" events rather than full page reloads.
-  // We hook into them so each module gets a chance to re-run when the URL changes.
+  /**
+   * Navigation handler for YouTube's SPA transitions.
+   * Since YouTube updates the URL without a full page reload, we 
+   * manually notify modules when the "page" has changed.
+   */
   function onNavigate() {
     if (!currentSettings || !currentSettings.extensionEnabled) return;
 
@@ -126,10 +136,13 @@
     try { QualityModule.onNavigate(currentSettings); } catch (e) { console.error('[NeatTube]', e); }
   }
 
-  // ── Navigation listeners ─────────────────────────────────
+  // ── Event Listeners ──────────────────────────────────────
 
+  /**
+   * Listens for YouTube's custom internal events.
+   * 'yt-navigate-finish' is the standard way to detect an SPA page change.
+   */
   function setupNavigationListeners() {
-    // YouTube fires these custom events on SPA navigation
     document.addEventListener('yt-navigate-finish', () => {
       debugLog(currentSettings, 'Main: yt-navigate-finish');
       onNavigate();
@@ -141,19 +154,22 @@
     });
   }
 
-  // The MutationObserver is our safety net for content that gets loaded outside  
-  // YouTube's navigation events — stuff like lazy-loaded video cards scrolling in.
-  // We debounce it (500ms) to avoid hammering the modules on every tiny DOM change.
+  /**
+   * Safety net for dynamic content injections.
+   * YouTube often injects items (like new video rows) as you scroll.
+   * We use a debounced observer to scan the DOM for these elements 
+   * without killing performance.
+   */
   function setupMutationObserver() {
     if (mutationObserver) mutationObserver.disconnect();
 
     mutationObserver = new MutationObserver(() => {
-      // Debounce to avoid excessive re-runs
+      // We debounce the run to avoid a performance hit during rapid DOM changes
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         if (!currentSettings || !currentSettings.extensionEnabled) return;
 
-        // Re-run modules that need to scan for newly inserted content
+        // Currently, only the Members Filter needs to react to scrolling/lazy-loading
         try {
           if (currentSettings.membersOnlyFilter) {
             MembersFilterModule.enable(currentSettings);
@@ -164,7 +180,7 @@
       }, DEBOUNCE_MS);
     });
 
-    // Observe body for child additions (YouTube dynamically inserts content)
+    // Subtree: true ensures we catch injections deep inside the app container
     const target = document.body || document.documentElement;
     mutationObserver.observe(target, {
       childList: true,
@@ -172,8 +188,10 @@
     });
   }
 
-  // ── Settings change listener ─────────────────────────────
-
+  /**
+   * Listens for real-time setting changes from the popup or options page.
+   * This allows the UI to stay perfectly in sync without a refresh.
+   */
   function setupSettingsListener() {
     NeatTubeSettings.onChange((newSettings) => {
       debugLog(newSettings, 'Main: settings changed', newSettings);
@@ -182,6 +200,6 @@
     });
   }
 
-  // ── Start ────────────────────────────────────────────────
+  // Kick everything off
   boot();
 })();

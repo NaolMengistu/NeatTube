@@ -1,8 +1,115 @@
-/* 
- * NeatTube — Popup Styles
- *
- * Keeps the popup looking sleek, dark, and consistent with YouTube's own design language.
+/**
+ * NeatTube — Quick-Toggle Popup Styles
+ * 
+ * This stylesheet defines the look of the browser action popup. 
+ * To maintain a cohesive brand feel, it shares the same Design Tokens 
+ * (CSS Variables) and theme-switching logic as the main options page.
+ * 
+ * Theme Orchestration:
+ * The 'data-theme' attribute is injected by popup.js on initialization, 
+ * which instantly flips the variables defined below.
  */
+
+/* ── DESIGN TOKENS (Variables) ────────────────────────── */
+
+/**
+ * Dark Theme (Default)
+ * Optimized for low-light environments and consistent with YouTube's Ambient mode.
+ */
+:root {
+  --bg-page:       #0f0f0f;
+  --bg-row-hover:  rgba(255, 255, 255, 0.05);
+  --bg-select:     #2a2a2a;
+  --bg-select-opt: #1a1a1a;
+  --border-color:  rgba(255, 255, 255, 0.1);
+  --text-primary:  #e8e8e8;
+  --text-label:    #ccc;
+  --toggle-track:  #3a3a3a;
+  --toggle-thumb:  #aaa;
+  --link-color:    #3ea6ff;
+  --link-hover:    #7cc4ff;
+  --note-color:    #666;
+  --divider:       rgba(255, 255, 255, 0.1);
+
+  /* Branding (Dark) — A vibrant Red-to-Rose glow */
+  --brand-gradient:       linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  --brand-shadow:         drop-shadow(0 2px 4px rgba(255, 75, 43, 0.3));
+}
+
+/**
+ * Explicit Dark Theme Override
+ */
+:root[data-theme="dark"] {
+  --bg-page:       #0f0f0f;
+  --bg-row-hover:  rgba(255, 255, 255, 0.05);
+  --bg-select:     #2a2a2a;
+  --bg-select-opt: #1a1a1a;
+  --border-color:  rgba(255, 255, 255, 0.1);
+  --text-primary:  #e8e8e8;
+  --text-label:    #ccc;
+  --toggle-track:  #3a3a3a;
+  --toggle-thumb:  #aaa;
+  --link-color:    #3ea6ff;
+  --link-hover:    #7cc4ff;
+  --note-color:    #666;
+  --divider:       rgba(255, 255, 255, 0.1);
+
+  /* Branding (Dark Override) */
+  --brand-gradient:       linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  --brand-shadow:         drop-shadow(0 2px 4px rgba(255, 75, 43, 0.3));
+}
+
+/**
+ * Light Theme
+ * A high-contrast, clean variant for those who prefer light mode.
+ */
+:root[data-theme="light"] {
+  --bg-page:       #f2f2f2;
+  --bg-row-hover:  rgba(0, 0, 0, 0.05);
+  --bg-select:     #e8e8e8;
+  --bg-select-opt: #ffffff;
+  --border-color:  rgba(0, 0, 0, 0.1);
+  --text-primary:  #111111;
+  --text-label:    #444444;
+  --toggle-track:  #c4c4c4;
+  --toggle-thumb:  #888888;
+  --link-color:    #0070cc;
+  --link-hover:    #004fa3;
+  --note-color:    #888888;
+  --divider:       rgba(0, 0, 0, 0.1);
+
+  /* Branding (Light) — A deeper, high-legibility YouTube red */
+  --brand-gradient:       linear-gradient(135deg, #CB1E1E 0%, #FF4B2B 100%);
+  --brand-shadow:         drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/**
+ * System Context
+ * Automatically inherits the user's OS-level light/dark preference.
+ */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    --bg-page:       #f2f2f2;
+    --bg-row-hover:  rgba(0, 0, 0, 0.05);
+    --bg-select:     #e8e8e8;
+    --bg-select-opt: #ffffff;
+    --border-color:  rgba(0, 0, 0, 0.1);
+    --text-primary:  #111111;
+    --text-label:    #444444;
+    --toggle-track:  #c4c4c4;
+    --toggle-thumb:  #888888;
+    --link-color:    #0070cc;
+    --link-hover:    #004fa3;
+    --note-color:    #888888;
+    --divider:       rgba(0, 0, 0, 0.1);
+
+    /* Branding (System Light) */
+    --brand-gradient:       linear-gradient(135deg, #CB1E1E 0%, #FF4B2B 100%);
+    --brand-shadow:         drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  }
+}
+
+/* ── LAYOUT & BASE ────────────────────────────────────── */
 
 * {
   margin: 0;
@@ -12,18 +119,19 @@
 
 body {
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #0f0f0f;
-  color: #e8e8e8;
+  background: var(--bg-page);
+  color: var(--text-primary);
   min-width: 300px;
   max-width: 300px;
+  /* Smooth theme transitions */
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .popup-container {
   padding: 16px;
 }
 
-/* ── Header ── */
-
+/* Header & Branding */
 .popup-header {
   display: flex;
   align-items: center;
@@ -43,24 +151,27 @@ body {
   border-radius: 6px;
 }
 
+/**
+ * Refined Brand Typography
+ */
 .brand h1 {
   font-size: 18px;
   font-weight: 700;
-  background: linear-gradient(135deg, #ff4e45, #ff8c42);
+  background: var(--brand-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: var(--brand-shadow);
 }
 
-/* ── Divider ── */
 
 .divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--divider);
   margin: 12px 0;
 }
 
-/* ── Feature Rows ── */
+/* ── COMPONENT ROWS ──────────────────────────────────── */
 
 .features {
   display: flex;
@@ -78,16 +189,16 @@ body {
 }
 
 .feature-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-row-hover);
 }
 
 .feature-label {
   font-size: 13px;
   font-weight: 500;
-  color: #ccc;
+  color: var(--text-label);
 }
 
-/* ── Toggle Switch ── */
+/* ── TOGGLE SWITCH (Custom) ────────────────────────────── */
 
 .toggle-switch {
   position: relative;
@@ -97,6 +208,7 @@ body {
   flex-shrink: 0;
 }
 
+/* Hidden native checkbox logic */
 .toggle-switch input {
   opacity: 0;
   width: 0;
@@ -107,7 +219,7 @@ body {
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background: #3a3a3a;
+  background: var(--toggle-track);
   border-radius: 22px;
   transition: background 0.25s ease;
 }
@@ -119,53 +231,73 @@ body {
   height: 16px;
   left: 3px;
   bottom: 3px;
-  background: #aaa;
+  background: var(--toggle-thumb);
   border-radius: 50%;
   transition: transform 0.25s ease, background 0.25s ease;
 }
 
-.toggle-switch input:checked+.slider {
-  background: #cc0000;
+.toggle-switch input:checked + .slider {
+  background: #cc0000; /* Primary brand red */
 }
 
-.toggle-switch input:checked+.slider::before {
+.toggle-switch input:checked + .slider::before {
   transform: translateX(18px);
   background: #fff;
 }
 
-.master-toggle .slider::before {
-  width: 18px;
-  height: 18px;
-  left: 2px;
-  bottom: 2px;
-}
-
+/* Master Toggle Variant (Larger Pill) */
 .master-toggle {
   width: 44px;
   height: 24px;
 }
 
-.master-toggle input:checked+.slider {
-  background: #00c853;
+.master-toggle .slider::before {
+  width: 18px;
+  height: 18px;
+  left: 4px;
+  bottom: 3px;
 }
 
-/* ── Disabled state ── */
+.master-toggle input:checked + .slider {
+  background: #00c853; /* Success green */
+}
 
+/* ── MISC UI ELEMENTS ─────────────────────────────────── */
+
+.icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Special alignment for the options link icon */
+.options-link .icon {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  display: block;
+  flex-shrink: 0;
+}
+
+/**
+ * Globally dim the feature list when the Master Toggle is off
+ */
 .features.disabled {
   opacity: 0.4;
   pointer-events: none;
 }
-
-/* ── Select Input ── */
 
 .quality-row {
   margin-top: 8px;
 }
 
 .select-input {
-  background: #2a2a2a;
-  color: #e8e8e8;
-  border: 1px solid #3a3a3a;
+  background: var(--bg-select);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 12px;
@@ -180,11 +312,11 @@ body {
 }
 
 .select-input option {
-  background: #1a1a1a;
-  color: #e8e8e8;
+  background: var(--bg-select-opt);
+  color: var(--text-primary);
 }
 
-/* ── Footer ── */
+/* ── POPUP FOOTER ─────────────────────────────────────── */
 
 .popup-footer {
   display: flex;
@@ -193,19 +325,22 @@ body {
 }
 
 .options-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
-  color: #3ea6ff;
+  color: var(--link-color);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .options-link:hover {
-  color: #7cc4ff;
+  color: var(--link-hover);
 }
 
 .yt-note {
   font-size: 10px;
-  color: #666;
+  color: var(--note-color);
   font-style: italic;
 }

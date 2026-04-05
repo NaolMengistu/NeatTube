@@ -10,11 +10,13 @@
 
 <body>
   <div class="popup-container">
+    <!-- ── BRANDING & MASTER SWITCH ── -->
     <header class="popup-header">
       <div class="brand">
         <img src="../icons/icon32.png" alt="NeatTube" class="brand-icon">
         <h1>NeatTube</h1>
       </div>
+      <!-- Global Master Toggle: Disables all features when unchecked -->
       <label class="toggle-switch master-toggle" id="master-toggle-label">
         <input type="checkbox" id="extensionEnabled">
         <span class="slider"></span>
@@ -23,47 +25,54 @@
 
     <div class="divider"></div>
 
+    <!-- ── QUICK TOGGLE FEATURES ── -->
     <section class="features" id="features-section">
+      <!-- Shorts Removal: Hides Shorts from home, sidebar, and search -->
       <div class="feature-row">
-        <span class="feature-label">🚫 Hide Shorts</span>
+        <span class="feature-label"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>Hide Shorts</span>
         <label class="toggle-switch">
           <input type="checkbox" id="shortsRemoval">
           <span class="slider"></span>
         </label>
       </div>
 
+      <!-- Members-Only Filter: Uses heuristics to strip premium-only content -->
       <div class="feature-row">
-        <span class="feature-label">🔒 Filter out Members-Only</span>
+        <span class="feature-label"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Filter out Members-Only</span>
         <label class="toggle-switch">
           <input type="checkbox" id="membersOnlyFilter">
           <span class="slider"></span>
         </label>
       </div>
 
+      <!-- Picture in Picture (PiP): Keyboard shortcut is Alt+P -->
       <div class="feature-row">
-        <span class="feature-label">🖼️ Picture in Picture</span>
+        <span class="feature-label"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="15" rx="2"/><rect x="13" y="11" width="8" height="7" rx="1"/></svg>Picture in Picture</span>
         <label class="toggle-switch">
           <input type="checkbox" id="pictureInPicture">
           <span class="slider"></span>
         </label>
       </div>
 
+      <!-- Dislike count: Restores community-estimated scores via RYD API -->
       <div class="feature-row">
-        <span class="feature-label">👎 Show Dislike count</span>
+        <span class="feature-label"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>Show Dislike count</span>
         <label class="toggle-switch">
           <input type="checkbox" id="dislikeCount">
           <span class="slider"></span>
         </label>
       </div>
 
+      <!-- Auto HD Quality: Forces the player to respect your preferred resolution -->
       <div class="feature-row">
-        <span class="feature-label">🎬 Auto HD Quality</span>
+        <span class="feature-label"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>Auto HD Quality</span>
         <label class="toggle-switch">
           <input type="checkbox" id="autoQuality">
           <span class="slider"></span>
         </label>
       </div>
 
+      <!-- Preferred resolution picker -->
       <div class="feature-row quality-row" id="quality-selector-row">
         <span class="feature-label">Preferred resolution</span>
         <select id="preferredQuality" class="select-input">
@@ -83,8 +92,10 @@
 
     <div class="divider"></div>
 
+    <!-- ── EXTERNAL LINKS & CONTEXT ── -->
     <footer class="popup-footer">
-      <a href="#" id="open-options" class="options-link">⚙ Full Settings</a>
+      <!-- Opens the full chrome-extension:// options page -->
+      <a href="#" id="open-options" class="options-link"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Full Settings</a>
       <span class="yt-note">Only active on youtube.com</span>
     </footer>
   </div>

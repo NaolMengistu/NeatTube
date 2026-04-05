@@ -1,12 +1,13 @@
 /**
- * NeatTube — Shorts Hider & Redirector
- *
- * Scours the page and nukes YouTube Shorts from existence. 
- * Whether it's the sidebar, homepage shelves, or search results, they're gone.
- *
- * Why CSS injection? Because YouTube's SPA (Single Page Application) approach 
- * constantly re-renders the DOM. If we just remove elements via JS, they'll pop right 
- * back up a second later. Injecting a global `<style>` tag guarantees they stay dead.
+ * NeatTube — Shorts Hider & Video Redirector
+ * 
+ * This module is responsible for scrubbing YouTube Shorts from the interface. 
+ * 
+ * Why we use CSS injection instead of DOM removal:
+ * YouTube is a Single Page Application (SPA). If we remove an element using 
+ * JavaScript, YouTube's internal engine often re-renders it moments later. 
+ * By injecting global CSS rules, we ensure that Shorts stay hidden even as 
+ * YouTube dynamically updates the feed.
  */
 
 /* exported ShortsModule */
@@ -17,15 +18,17 @@ const ShortsModule = (() => {
   let _settings = null;
 
   /**
-   * Build the CSS rules string for hiding Shorts elements.
+   * Generates a complete CSS ruleset based on the user's specific hidden-content 
+   * preferences (Sidebar, Shelves, etc.).
    */
   function buildCSS(settings) {
     const rules = [];
 
-    // Hide Shorts sidebar entry
+    // Scrub the "Shorts" button from both the expanded and mini sidebars
     if (settings.hideShortsInSidebar) {
       rules.push(`${SELECTORS.shortsSidebarEntry} { display: none !important; }`);
-      // Also hide the parent guide entry if the link itself is targeted
+
+      // We also target the parent renderer to ensure no empty spacing is left behind
       rules.push(`
         ytd-guide-entry-renderer:has(a[title="Shorts"]),
         ytd-mini-guide-entry-renderer:has(a[title="Shorts"])
@@ -33,20 +36,20 @@ const ShortsModule = (() => {
       `);
     }
 
-    // Hide Shorts shelves on home, search, subscriptions
+    // Scrub Shorts buckets and shelves from the Home, Search, and Subscriptions feeds
     if (settings.hideShortsInShelves) {
       rules.push(`${SELECTORS.shortsShelves} { display: none !important; }`);
       rules.push(`${SELECTORS.shortsItems} { display: none !important; }`);
     }
 
-    // Hide Shorts tab on channel pages
+    // Always hide the "Shorts" tab on individual channel pages
     rules.push(`${SELECTORS.shortsTab} { display: none !important; }`);
 
     return rules.join('\n');
   }
 
   /**
-   * Slaps our custom `<style>` tag into the document head.
+   * Injects or updates the global <style> tag in the document head.
    */
   function injectStyles(settings) {
     let style = document.getElementById(STYLE_ID);
@@ -57,12 +60,15 @@ const ShortsModule = (() => {
     }
     style.textContent = buildCSS(settings);
     style.disabled = false;
-    debugLog(settings, 'Shorts: styles injected');
+    debugLog(settings, 'Shorts: CSS injection complete.');
   }
 
   /**
-   * Catches anyone accidentally clicking a Shorts link or loading one directly,
-   * and punts them over to the normal YouTube video player interface instead.
+   * The Redirector.
+   * 
+   * If a user clicks a Shorts link from history or an external site, this 
+   * function intercepts the load and "punts" them to the standard YouTube 
+   * player (/watch?v=ID). This forces a consistent UI experience.
    */
   function handleRedirect(settings) {
     if (!settings.redirectShorts) return;
@@ -71,7 +77,9 @@ const ShortsModule = (() => {
     if (match) {
       const videoId = match[1];
       const newUrl = `/watch?v=${videoId}${window.location.search}`;
-      debugLog(settings, `Shorts: redirecting /shorts/${videoId} → ${newUrl}`);
+      debugLog(settings, `Shorts: intercepting redirect /shorts/${videoId} → ${newUrl}`);
+
+      // .replace() is used so the user doesn't get stuck in a "back button loop"
       window.location.replace(newUrl);
     }
   }
@@ -80,6 +88,7 @@ const ShortsModule = (() => {
     /**
      * Enable Shorts hiding with the given settings.
      * @param {Object} settings
+     * Start the Shorts scrubbing process.
      */
     enable(settings) {
       try {
@@ -92,7 +101,7 @@ const ShortsModule = (() => {
     },
 
     /**
-     * Disable Shorts hiding — hides the style tag.
+     * Restore Shorts visibility by disabling the injected styles.
      */
     disable() {
       try {
@@ -106,6 +115,7 @@ const ShortsModule = (() => {
     /**
      * Re-check redirect on navigation (called by content-main).
      * @param {Object} settings
+     * Re-check for required redirects on every internal YouTube navigation.
      */
     onNavigate(settings) {
       try {

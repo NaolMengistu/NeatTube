@@ -1,13 +1,21 @@
 /**
- * NeatTube — Shared Settings Manager
- *
- * A simple wrapper around Chrome's storage API. 
- * This gives all our modules an easy way to read user preferences, 
- * save new ones, and react instantly when the user flips a toggle in the popup.
+ * NeatTube — Central Settings Manager
+ * 
+ * This module acts as the "Source of Truth" for the extension. It wraps 
+ * Chrome's Storage API to provide all other modules with a consistent way 
+ * to read and write user preferences. 
+ * 
+ * It ensures that even if storage is empty (like after a first install), 
+ * every module receives a complete set of configuration values via the 
+ * DEFAULTS fallback system.
  */
 
 /* exported NeatTubeSettings, debugLog, DEFAULTS */
 
+/**
+ * The baseline configuration for the extension. 
+ * This is the ONLY place where default values should be defined.
+ */
 const DEFAULTS = Object.freeze({
   extensionEnabled: true,
   shortsRemoval: true,
@@ -27,8 +35,11 @@ const DEFAULTS = Object.freeze({
 });
 
 const NeatTubeSettings = {
-  // Reads all settings from Chrome sync storage. Any keys missing from storage 
-  // get filled in with values from DEFAULTS, so new settings always have a safe fallback.
+  /**
+   * Reads all settings from Chrome's synced storage.
+   * If a setting hasn't been modified by the user yet, the value from the 
+   * DEFAULTS object is used instead.
+   */
   load() {
     return new Promise((resolve) => {
       chrome.storage.sync.get(DEFAULTS, (items) => {
@@ -37,17 +48,21 @@ const NeatTubeSettings = {
     });
   },
 
-  // Write a chunk of settings back to Chrome sync. You only need to pass in
-  // the keys you're changing — everything else is left alone.
+  /**
+   * Persists a partial set of settings back to synced storage.
+   * You only need to pass the keys that are actually changing.
+   */
   save(partial) {
     return new Promise((resolve) => {
       chrome.storage.sync.set(partial, resolve);
     });
   },
 
-  // Attach a listener that fires whenever the user saves something from the
-  // popup or full settings page. We reload the full settings object before 
-  // calling back so the caller always gets a fresh, complete settings snapshot.
+  /**
+   * Listens for changes to settings (e.g. from the Popup or Options page).
+   * When any 'sync' area setting changes, we reload the entire configuration 
+   * and fire the callback with a fresh snapshot.
+   */
   onChange(callback) {
     chrome.storage.onChanged.addListener((_changes, area) => {
       if (area !== 'sync') return;
@@ -57,9 +72,10 @@ const NeatTubeSettings = {
 };
 
 /**
- * A handy debug logger.
- * Only spits out logs if the user actually turned on Debug Mode in the options.
- * Helps figure out what went wrong without cluttering the console normally.
+ * Global technical logger.
+ * Only outputs to the console if 'Debug Mode' is manually enabled in the 
+ * extension options. This keeps the user's console clean unless they are 
+ * actively troubleshooting.
  */
 function debugLog(settings, ...args) {
   if (settings && settings.debugMode) {

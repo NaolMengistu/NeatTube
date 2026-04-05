@@ -10,17 +10,22 @@
 
 <body>
   <div class="options-container">
+    <!-- ── BRANDING & THEME ── -->
     <header class="options-header">
       <div class="brand">
         <img src="../icons/icon48.png" alt="NeatTube" class="brand-icon">
-        <div>
+        <div class="brand-info">
           <h1>NeatTube</h1>
           <p class="subtitle">YouTube Enhancement Settings</p>
         </div>
       </div>
+      <!-- Theme Switcher: Cycles through Dark, Light, and System modes -->
+      <button id="theme-cycle-btn" class="theme-cycle-btn" title="Cycle Theme">
+        <span id="header-theme-icon"></span>
+      </button>
     </header>
 
-    <!-- Global Toggle -->
+    <!-- ── MASTER CONTROL ── -->
     <section class="card">
       <div class="card-header">
         <h2>Extension</h2>
@@ -32,10 +37,14 @@
       <p class="card-note">Master switch — disables all features when off.</p>
     </section>
 
-    <!-- Shorts -->
+    <!-- ── SHORTS REMOVAL ── -->
     <section class="card" id="shorts-card">
       <div class="card-header">
-        <h2>🚫 Shorts Removal</h2>
+        <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m4.9 4.9 14.2 14.2" />
+          </svg>Shorts Removal</h2>
         <label class="toggle-switch">
           <input type="checkbox" id="shortsRemoval">
           <span class="slider"></span>
@@ -66,10 +75,14 @@
       </div>
     </section>
 
-    <!-- Members Only -->
+    <!-- ── MEMBERSHIP FILTER ── -->
     <section class="card" id="members-card">
       <div class="card-header">
-        <h2>🔒 Filter out Members-Only</h2>
+        <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>Filter out Members-Only</h2>
         <label class="toggle-switch">
           <input type="checkbox" id="membersOnlyFilter">
           <span class="slider"></span>
@@ -94,10 +107,14 @@
       <p class="card-note">Uses heuristics to detect members-only content. May occasionally miss or over-match.</p>
     </section>
 
-    <!-- Picture in Picture -->
+    <!-- ── PICTURE IN PICTURE ── -->
     <section class="card" id="pip-card">
       <div class="card-header">
-        <h2>🖼️ Picture in Picture</h2>
+        <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="15" rx="2" />
+            <rect x="13" y="11" width="8" height="7" rx="1" />
+          </svg>Picture in Picture</h2>
         <label class="toggle-switch">
           <input type="checkbox" id="pictureInPicture">
           <span class="slider"></span>
@@ -105,21 +122,25 @@
       </div>
       <div class="sub-options">
         <div class="option-row">
-          <span>Auto PiP (enter automatically on tab switch)</span>
+          <span>Auto PiP on tab switch (Beta)</span>
           <label class="toggle-switch small">
             <input type="checkbox" id="autoPip">
             <span class="slider"></span>
           </label>
         </div>
       </div>
-      <p class="card-note">Toggle the active video using the shortcut <kbd>Alt</kbd>+<kbd>P</kbd>. Works best when video
-        is playing.</p>
+      <p class="card-note">Toggle the active video using the shortcut <kbd>Alt</kbd>+<kbd>P</kbd>.</p>
     </section>
 
-    <!-- Dislikes -->
+    <!-- ── DISLIKE RESTORATION ── -->
     <section class="card" id="dislikes-card">
       <div class="card-header">
-        <h2>👎 Show Dislike count</h2>
+        <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 14V2" />
+            <path
+              d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
+          </svg>Show Dislike count</h2>
         <label class="toggle-switch">
           <input type="checkbox" id="dislikeCount">
           <span class="slider"></span>
@@ -129,10 +150,14 @@
         exact.</p>
     </section>
 
-    <!-- Quality -->
+    <!-- ── QUALITY ENFORCEMENT ── -->
     <section class="card" id="quality-card">
       <div class="card-header">
-        <h2>🎬 Auto HD Quality</h2>
+        <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m22 8-6 4 6 4V8z" />
+            <rect x="2" y="6" width="14" height="12" rx="2" />
+          </svg>Auto HD Quality</h2>
         <label class="toggle-switch">
           <input type="checkbox" id="autoQuality">
           <span class="slider"></span>
@@ -166,10 +191,21 @@
         back to the nearest lower available resolution.</p>
     </section>
 
-    <!-- Debug -->
+    <!-- ── TROUBLESHOOTING ── -->
     <section class="card">
       <div class="card-header">
-        <h2>🐛 Debug Mode</h2>
+        <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2 10 4" />
+            <path d="m14 4 2-2" />
+            <rect x="8.5" y="8" width="7" height="12" rx="3.5" />
+            <path d="M2 14h6" />
+            <path d="M16 14h6" />
+            <path d="M6 7 4 4" />
+            <path d="m20 4-2 3" />
+            <path d="M2 18h6" />
+            <path d="M16 18h6" />
+          </svg>Debug Mode</h2>
         <label class="toggle-switch">
           <input type="checkbox" id="debugMode">
           <span class="slider"></span>
@@ -178,19 +214,20 @@
       <p class="card-note">Logs module activity to the browser console with [NeatTube] prefix.</p>
     </section>
 
-    <!-- Actions -->
+    <!-- ── FOOTER ACTIONS ── -->
     <section class="actions">
       <button id="reset-defaults" class="btn btn-danger">Reset to Defaults</button>
       <span class="save-status" id="save-status"></span>
     </section>
 
-    <!-- Footer -->
+    <!-- ── CREDITS & LINKS ── -->
     <footer class="options-footer">
       <p class="primary-link-wrapper">
         <a href="https://neattube.app/" target="_blank" class="neattube-link">neattube.app</a>
       </p>
       <p class="creator-text">
-        Created by <a href="https://naol.dev/" target="_blank" class="naol-link">naol.dev</a>
+        &copy; <span id="copyright-year"></span> <a href="https://naol.dev/" target="_blank"
+          class="naol-link">naol.dev</a>
       </p>
     </footer>
   </div>
