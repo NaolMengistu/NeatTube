@@ -123,22 +123,19 @@ const PipModule = (() => {
    * Cleans up the injector and explicitly nulls the handler in the 
    * main world. This ensures the feature turns off immediately when 
    * toggled in settings, without requiring a page refresh.
+   *
+   * We can't use an inline <script> here — YouTube's CSP blocks it.
+   * Instead, we fire a CustomEvent that the already-injected pip-injector.js
+   * is listening for. It lives in the main world and can safely clear the
+   * Media Session handler from there.
    */
   function removeAutoPipScript() {
     const existing = document.getElementById(INJECTOR_ID);
     if (existing) existing.remove();
 
-    if (!chrome.runtime?.id) return;
-
-    // We inject a tiny one-off script to clear the main-world action handler
-    const clearScript = document.createElement('script');
-    clearScript.textContent = `
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.setActionHandler('enterpictureinpicture', null);
-      }
-    `;
-    document.documentElement.appendChild(clearScript);
-    clearScript.remove();
+    // Signal the main-world injector to clear its Media Session handler.
+    // This is CSP-safe: no inline scripts, just a DOM event.
+    document.dispatchEvent(new CustomEvent('neattube-pip-disable'));
   }
 
   return {

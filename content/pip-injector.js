@@ -60,4 +60,23 @@
   } else {
     log('Media Session API is not supported in this browser.');
   }
+
+  /**
+   * Listen for a disable signal from the isolated-world content script.
+   * 
+   * pip.js can't run inline scripts (YouTube's CSP blocks them), so instead
+   * it dispatches a CustomEvent on the document. We catch it here in the main
+   * world and cleanly null the Media Session handler — no CSP violation.
+   */
+  document.addEventListener('neattube-pip-disable', function onDisable() {
+    document.removeEventListener('neattube-pip-disable', onDisable);
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', null);
+        log('Media Session handler cleared.');
+      } catch (err) {
+        log('Could not clear Media Session handler:', err.message);
+      }
+    }
+  });
 })();
