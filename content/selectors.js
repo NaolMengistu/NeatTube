@@ -20,8 +20,10 @@ const SELECTORS = {
   shortsShelves: [
     'ytd-rich-shelf-renderer[is-shorts]',
     'ytd-reel-shelf-renderer',
+    'grid-shelf-view-model',
     'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
     'ytd-rich-section-renderer:has(ytd-reel-shelf-renderer)',
+    'ytd-rich-section-renderer:has(grid-shelf-view-model)',
   ].join(', '),
 
   // Individual Shorts cards that appear mixed within general search results/recommendations
@@ -30,6 +32,8 @@ const SELECTORS = {
     'ytd-video-renderer:has(a[href*="/shorts/"])',
     'ytd-grid-video-renderer:has(a[href*="/shorts/"])',
     'ytd-compact-video-renderer:has(a[href*="/shorts/"])',
+    'ytm-shorts-lockup-view-model',
+    'ytm-shorts-lockup-view-model-v2',
   ].join(', '),
 
   // The "Shorts" tab on a Creator's channel page
@@ -38,16 +42,17 @@ const SELECTORS = {
   // ── Dislike Restoration ──────────────────────────────────
 
   // The modern segmented button bar containing both Like and Dislike
-  dislikeButtonSegment: 'ytd-segmented-like-dislike-button-renderer',
+  dislikeButtonSegment: 'segmented-like-dislike-button-view-model, ytd-segmented-like-dislike-button-renderer',
 
   // YouTube's internal ViewModel container for the dislike button
   dislikeViewModel: 'dislike-button-view-model',
 
   // The actual interactive button element for Disliking
-  dislikeButton: 'dislike-button-view-model button, ytd-segmented-like-dislike-button-renderer button[aria-label*="islike"]',
+  dislikeButton: 'dislike-button-view-model button',
 
   // The specific span where we inject our restored dislike count
-  dislikeButtonText: '.yt-spec-button-shape-next__button-text-content',
+  // We use [class*="..."] with case-insensitive 'i' flag to catch both camelCase and hyphenated versions.
+  dislikeButtonText: '.yt-spec-button-shape-next__button-text-content, .ytSpecButtonShapeNextButtonTextContent, [class*="button-text" i]',
 
   // ── Members-Only Filtering ───────────────────────────────
 
@@ -55,6 +60,7 @@ const SELECTORS = {
   membersBadges: [
     'ytd-badge-supported-renderer:has(.badge-style-type-members-only)',
     'ytd-badge-supported-renderer[aria-label*="Members only"]',
+    'badge-shape[aria-label*="Members only" i]',
     'span.badge-style-type-members-only',
     '.ytd-badge-supported-renderer[aria-label*="embers"]',
   ].join(', '),
@@ -62,11 +68,14 @@ const SELECTORS = {
   // Parent containers (rows, shelves, cards) that host member-locked content
   membersShelves: [
     'ytd-item-section-renderer:has(ytd-badge-supported-renderer.badge-style-type-members-only)',
-    'ytd-rich-item-renderer:has([aria-label*="Members only"])',
-    'ytd-video-renderer:has([aria-label*="Members only"])',
-    'ytd-compact-video-renderer:has([aria-label*="Members only"])',
-    'ytd-grid-video-renderer:has([aria-label*="Members only"])',
-    'ytd-shelf-renderer:has([aria-label*="Members only"])',
+    'ytd-item-section-renderer:has(badge-shape[aria-label*="Members only" i])',
+    'ytd-rich-item-renderer:has([aria-label*="Members only" i])',
+    'ytd-video-renderer:has([aria-label*="Members only" i])',
+    'ytd-compact-video-renderer:has([aria-label*="Members only" i])',
+    'ytd-grid-video-renderer:has([aria-label*="Members only" i])',
+    'ytd-shelf-renderer:has([aria-label*="Members only" i])',
+    'yt-lockup-view-model:has([aria-label*="Members only" i])',
+    'ytd-rich-grid-media:has([aria-label*="Members only" i])',
   ].join(', '),
 
   // Text strings we scan for during our heuristic fallback phase

@@ -22,7 +22,7 @@ const DEFAULTS = {
   pictureInPicture: true,
   autoPip: false,
   membersOnlyFilter: true,
-  hideMembersBadges: true,
+  hideMembersBadges: false,
   hideMembersShelves: true,
   dislikeCount: true,
   autoQuality: true,
@@ -44,6 +44,18 @@ const TOGGLE_IDS = [
   'dislikeCount',
   'autoQuality',
 ];
+
+// Selection order for the theme cycling button
+const THEME_ORDER = ['system', 'light', 'dark'];
+
+/**
+ * SVG icons for the theme switcher.
+ */
+const THEME_ICONS = {
+  system: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>`,
+  light: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`,
+  dark: `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+};
 
 /**
  * Initialization Sequence
@@ -73,11 +85,22 @@ async function loadSettings() {
  * @param {'dark'|'light'|'system'} theme
  */
 function applyTheme(theme) {
-  const valid = ['dark', 'light', 'system'];
-  document.documentElement.setAttribute(
-    'data-theme',
-    valid.includes(theme) ? theme : 'system'
-  );
+  const resolved = THEME_ORDER.includes(theme) ? theme : 'system';
+  document.documentElement.setAttribute('data-theme', resolved);
+
+  // Update the UI icon and dynamic tooltip
+  const iconEl = document.getElementById('header-theme-icon');
+  const btnEl = document.getElementById('theme-cycle-btn');
+
+  if (iconEl) {
+    iconEl.innerHTML = THEME_ICONS[resolved];
+  }
+
+  if (btnEl) {
+    // Calculate the next theme in the cycle for the tooltip
+    const nextTheme = THEME_ORDER[(THEME_ORDER.indexOf(resolved) + 1) % THEME_ORDER.length];
+    btnEl.title = `Current: ${resolved.charAt(0).toUpperCase() + resolved.slice(1)} (Click to switch to ${nextTheme})`;
+  }
 }
 
 /**
@@ -141,6 +164,21 @@ function bindEvents() {
   if (selectEl) {
     selectEl.addEventListener('change', () => {
       chrome.storage.sync.set({ preferredQuality: selectEl.value });
+    });
+  }
+
+  // Handle Theme Cycling
+  const themeBtn = document.getElementById('theme-cycle-btn');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', async () => {
+      const settings = await loadSettings();
+      const currentTheme = settings.theme || 'system';
+      const currentIndex = THEME_ORDER.indexOf(currentTheme);
+      const nextIndex = (currentIndex + 1) % THEME_ORDER.length;
+      const nextTheme = THEME_ORDER[nextIndex];
+
+      applyTheme(nextTheme);
+      chrome.storage.sync.set({ theme: nextTheme });
     });
   }
 

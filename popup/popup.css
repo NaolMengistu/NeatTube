@@ -28,7 +28,7 @@
   --toggle-thumb:  #aaa;
   --link-color:    #3ea6ff;
   --link-hover:    #7cc4ff;
-  --note-color:    #666;
+  --note-color:    #999;
   --divider:       rgba(255, 255, 255, 0.1);
 
   /* Branding (Dark) — A vibrant Red-to-Rose glow */
@@ -51,7 +51,7 @@
   --toggle-thumb:  #aaa;
   --link-color:    #3ea6ff;
   --link-hover:    #7cc4ff;
-  --note-color:    #666;
+  --note-color:    #999;
   --divider:       rgba(255, 255, 255, 0.1);
 
   /* Branding (Dark Override) */
@@ -75,7 +75,7 @@
   --toggle-thumb:  #888888;
   --link-color:    #0070cc;
   --link-hover:    #004fa3;
-  --note-color:    #888888;
+  --note-color:    #666666;
   --divider:       rgba(0, 0, 0, 0.1);
 
   /* Branding (Light) — A deeper, high-legibility YouTube red */
@@ -100,7 +100,7 @@
     --toggle-thumb:  #888888;
     --link-color:    #0070cc;
     --link-hover:    #004fa3;
-    --note-color:    #888888;
+    --note-color:    #666666;
     --divider:       rgba(0, 0, 0, 0.1);
 
     /* Branding (System Light) */
@@ -137,6 +137,12 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .brand {
@@ -262,6 +268,40 @@ body {
   background: #00c853; /* Success green */
 }
 
+/* ── THEME CYCLE BUTTON ───────────────────────────────── */
+
+.theme-cycle-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  outline: none;
+}
+
+.theme-cycle-btn:hover {
+  background: var(--bg-row-hover);
+  border-color: var(--link-color);
+  transform: rotate(15deg);
+}
+
+.theme-cycle-btn:active {
+  transform: scale(0.92);
+}
+
+.theme-cycle-btn .icon {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
 /* ── MISC UI ELEMENTS ─────────────────────────────────── */
 
 .icon {
@@ -340,7 +380,7 @@ body {
 }
 
 .yt-note {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--note-color);
-  font-style: italic;
+  font-weight: 500;
 }

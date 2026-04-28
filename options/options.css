@@ -19,47 +19,47 @@
  */
 :root {
   /* Backgrounds */
-  --bg-page:              #0a0a0a;
-  --bg-card:              #181818;
-  --bg-select:            #2a2a2a;
-  --bg-select-opt:        #1a1a1a;
-  --bg-btn-danger:        #3a1a1a;
-  --bg-btn-danger-hover:  #4a1a1a;
-  --bg-theme-btn:         #202020;
-  --bg-theme-btn-hover:   #2e2e2e;
+  --bg-page: #0a0a0a;
+  --bg-card: #181818;
+  --bg-select: #2a2a2a;
+  --bg-select-opt: #1a1a1a;
+  --bg-btn-danger: #3a1a1a;
+  --bg-btn-danger-hover: #4a1a1a;
+  --bg-theme-btn: #202020;
+  --bg-theme-btn-hover: #2e2e2e;
 
   /* Borders & Separation */
-  --border-color:         #2a2a2a;
-  --border-hover:         #3a3a3a;
-  --border-suboptions:    #2a2a2a;
-  --border-option-row:    rgba(255, 255, 255, 0.04);
-  --border-actions:       #2a2a2a;
+  --border-color: #2a2a2a;
+  --border-hover: #3a3a3a;
+  --border-suboptions: #2a2a2a;
+  --border-option-row: rgba(255, 255, 255, 0.04);
+  --border-actions: #2a2a2a;
 
   /* Typography */
-  --text-primary:         #e8e8e8;
-  --text-secondary:       #bbb;
-  --text-muted:           #888;
-  --text-faint:           #666;
-  --text-heading:         #f1f1f1;
-  --text-subtitle:        #888;
-  --text-theme-btn:       #777;
+  --text-primary: #e8e8e8;
+  --text-secondary: #bbb;
+  --text-muted: #888;
+  --text-faint: #666;
+  --text-heading: #f1f1f1;
+  --text-subtitle: #888;
+  --text-theme-btn: #777;
 
   /* Component States */
-  --toggle-track:         #3a3a3a;
-  --toggle-thumb:         #888;
-  --btn-danger-color:     #ff6b6b;
-  --btn-danger-border:    #5a2a2a;
-  --theme-btn-active-bg:    #cc0000;
+  --toggle-track: #3a3a3a;
+  --toggle-thumb: #888;
+  --btn-danger-color: #ff6b6b;
+  --btn-danger-border: #5a2a2a;
+  --theme-btn-active-bg: #cc0000;
   --theme-btn-active-color: #ffffff;
-  --theme-btn-active-border:#cc0000;
-  --kbd-bg:               #2a2a2a;
-  --kbd-border:           #444;
-  --kbd-color:            #ccc;
-  --save-color:           #00c853;
+  --theme-btn-active-border: #cc0000;
+  --kbd-bg: #2a2a2a;
+  --kbd-border: #444;
+  --kbd-color: #ccc;
+  --save-color: #00c853;
 
   /* Branding (Dark) — A vibrant Red-to-Rose glow */
-  --brand-gradient:       linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
-  --brand-shadow:         drop-shadow(0 2px 4px rgba(255, 75, 43, 0.3));
+  --brand-gradient: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  --brand-shadow: drop-shadow(0 2px 4px rgba(255, 75, 43, 0.3));
 }
 
 /**
@@ -67,48 +67,48 @@
  * Ensures specificity when the user manually locks the theme to "Dark".
  */
 :root[data-theme="dark"] {
-  --bg-page:              #0a0a0a;
-  --bg-card:              #181818;
-  --bg-select:            #2a2a2a;
-  --bg-select-opt:        #1a1a1a;
-  --bg-btn-danger:        #3a1a1a;
-  --bg-btn-danger-hover:  #4a1a1a;
-  --bg-theme-btn:         #202020;
-  --bg-theme-btn-hover:   #2e2e2e;
+  --bg-page: #0a0a0a;
+  --bg-card: #181818;
+  --bg-select: #2a2a2a;
+  --bg-select-opt: #1a1a1a;
+  --bg-btn-danger: #3a1a1a;
+  --bg-btn-danger-hover: #4a1a1a;
+  --bg-theme-btn: #202020;
+  --bg-theme-btn-hover: #2e2e2e;
 
-  --border-color:         #2a2a2a;
-  --border-hover:         #3a3a3a;
-  --border-suboptions:    #2a2a2a;
-  --border-option-row:    rgba(255, 255, 255, 0.04);
-  --border-actions:       #2a2a2a;
+  --border-color: #2a2a2a;
+  --border-hover: #3a3a3a;
+  --border-suboptions: #2a2a2a;
+  --border-option-row: rgba(255, 255, 255, 0.04);
+  --border-actions: #2a2a2a;
 
-  --text-primary:         #e8e8e8;
-  --text-secondary:       #bbb;
-  --text-muted:           #888;
-  --text-faint:           #666;
-  --text-heading:         #f1f1f1;
-  --text-subtitle:        #888;
-  --text-theme-btn:       #777;
+  --text-primary: #e8e8e8;
+  --text-secondary: #bbb;
+  --text-muted: #888;
+  --text-faint: #666;
+  --text-heading: #f1f1f1;
+  --text-subtitle: #888;
+  --text-theme-btn: #777;
 
-  --toggle-track:         #3a3a3a;
-  --toggle-thumb:         #888;
+  --toggle-track: #3a3a3a;
+  --toggle-thumb: #888;
 
-  --btn-danger-color:     #ff6b6b;
-  --btn-danger-border:    #5a2a2a;
+  --btn-danger-color: #ff6b6b;
+  --btn-danger-border: #5a2a2a;
 
-  --theme-btn-active-bg:    #cc0000;
+  --theme-btn-active-bg: #cc0000;
   --theme-btn-active-color: #ffffff;
-  --theme-btn-active-border:#cc0000;
+  --theme-btn-active-border: #cc0000;
 
-  --kbd-bg:               #2a2a2a;
-  --kbd-border:           #444;
-  --kbd-color:            #ccc;
+  --kbd-bg: #2a2a2a;
+  --kbd-border: #444;
+  --kbd-color: #ccc;
 
-  --save-color:           #00c853;
+  --save-color: #00c853;
 
   /* Branding (Dark Override) */
-  --brand-gradient:       linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
-  --brand-shadow:         drop-shadow(0 2px 4px rgba(255, 75, 43, 0.3));
+  --brand-gradient: linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%);
+  --brand-shadow: drop-shadow(0 2px 4px rgba(255, 75, 43, 0.3));
 }
 
 /**
@@ -116,48 +116,48 @@
  * High-contrast, paper-like aesthetic for daytime use.
  */
 :root[data-theme="light"] {
-  --bg-page:              #f2f2f2;
-  --bg-card:              #ffffff;
-  --bg-select:            #f0f0f0;
-  --bg-select-opt:        #ffffff;
-  --bg-btn-danger:        #fff0f0;
-  --bg-btn-danger-hover:  #ffe4e4;
-  --bg-theme-btn:         #ebebeb;
-  --bg-theme-btn-hover:   #e0e0e0;
+  --bg-page: #f2f2f2;
+  --bg-card: #ffffff;
+  --bg-select: #f0f0f0;
+  --bg-select-opt: #ffffff;
+  --bg-btn-danger: #fff0f0;
+  --bg-btn-danger-hover: #ffe4e4;
+  --bg-theme-btn: #ebebeb;
+  --bg-theme-btn-hover: #e0e0e0;
 
-  --border-color:         #e2e2e2;
-  --border-hover:         #c8c8c8;
-  --border-suboptions:    #e2e2e2;
-  --border-option-row:    rgba(0, 0, 0, 0.06);
-  --border-actions:       #e2e2e2;
+  --border-color: #e2e2e2;
+  --border-hover: #c8c8c8;
+  --border-suboptions: #e2e2e2;
+  --border-option-row: rgba(0, 0, 0, 0.06);
+  --border-actions: #e2e2e2;
 
-  --text-primary:         #111111;
-  --text-secondary:       #444444;
-  --text-muted:           #595959;
-  --text-faint:           #767676;
-  --text-heading:         #111111;
-  --text-subtitle:        #666666;
-  --text-theme-btn:       #555555;
+  --text-primary: #111111;
+  --text-secondary: #444444;
+  --text-muted: #595959;
+  --text-faint: #767676;
+  --text-heading: #111111;
+  --text-subtitle: #666666;
+  --text-theme-btn: #555555;
 
-  --toggle-track:         #c4c4c4;
-  --toggle-thumb:         #888888;
+  --toggle-track: #c4c4c4;
+  --toggle-thumb: #888888;
 
-  --btn-danger-color:     #cc0000;
-  --btn-danger-border:    #ffc0c0;
+  --btn-danger-color: #cc0000;
+  --btn-danger-border: #ffc0c0;
 
-  --theme-btn-active-bg:    #cc0000;
+  --theme-btn-active-bg: #cc0000;
   --theme-btn-active-color: #ffffff;
-  --theme-btn-active-border:#cc0000;
+  --theme-btn-active-border: #cc0000;
 
-  --kbd-bg:               #f0f0f0;
-  --kbd-border:           #ccc;
-  --kbd-color:            #555;
+  --kbd-bg: #f0f0f0;
+  --kbd-border: #ccc;
+  --kbd-color: #555;
 
-  --save-color:           #00a846;
+  --save-color: #00a846;
 
   /* Branding (Light) — A deeper, high-legibility YouTube red */
-  --brand-gradient:       linear-gradient(135deg, #CB1E1E 0%, #FF4B2B 100%);
-  --brand-shadow:         drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  --brand-gradient: linear-gradient(135deg, #CB1E1E 0%, #FF4B2B 100%);
+  --brand-shadow: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 /**
@@ -166,48 +166,48 @@
  */
 @media (prefers-color-scheme: light) {
   :root[data-theme="system"] {
-    --bg-page:              #f2f2f2;
-    --bg-card:              #ffffff;
-    --bg-select:            #f0f0f0;
-    --bg-select-opt:        #ffffff;
-    --bg-btn-danger:        #fff0f0;
-    --bg-btn-danger-hover:  #ffe4e4;
-    --bg-theme-btn:         #ebebeb;
-    --bg-theme-btn-hover:   #e0e0e0;
+    --bg-page: #f2f2f2;
+    --bg-card: #ffffff;
+    --bg-select: #f0f0f0;
+    --bg-select-opt: #ffffff;
+    --bg-btn-danger: #fff0f0;
+    --bg-btn-danger-hover: #ffe4e4;
+    --bg-theme-btn: #ebebeb;
+    --bg-theme-btn-hover: #e0e0e0;
 
-    --border-color:         #e2e2e2;
-    --border-hover:         #c8c8c8;
-    --border-suboptions:    #e2e2e2;
-    --border-option-row:    rgba(0, 0, 0, 0.06);
-    --border-actions:       #e2e2e2;
+    --border-color: #e2e2e2;
+    --border-hover: #c8c8c8;
+    --border-suboptions: #e2e2e2;
+    --border-option-row: rgba(0, 0, 0, 0.06);
+    --border-actions: #e2e2e2;
 
-    --text-primary:         #111111;
-    --text-secondary:       #444444;
-    --text-muted:           #595959;
-    --text-faint:           #767676;
-    --text-heading:         #111111;
-    --text-subtitle:        #666666;
-    --text-theme-btn:       #555555;
+    --text-primary: #111111;
+    --text-secondary: #444444;
+    --text-muted: #595959;
+    --text-faint: #767676;
+    --text-heading: #111111;
+    --text-subtitle: #666666;
+    --text-theme-btn: #555555;
 
-    --toggle-track:         #c4c4c4;
-    --toggle-thumb:         #888888;
+    --toggle-track: #c4c4c4;
+    --toggle-thumb: #888888;
 
-    --btn-danger-color:     #cc0000;
-    --btn-danger-border:    #ffc0c0;
+    --btn-danger-color: #cc0000;
+    --btn-danger-border: #ffc0c0;
 
-    --theme-btn-active-bg:    #cc0000;
+    --theme-btn-active-bg: #cc0000;
     --theme-btn-active-color: #ffffff;
-    --theme-btn-active-border:#cc0000;
+    --theme-btn-active-border: #cc0000;
 
-    --kbd-bg:               #f0f0f0;
-    --kbd-border:           #ccc;
-    --kbd-color:            #555;
+    --kbd-bg: #f0f0f0;
+    --kbd-border: #ccc;
+    --kbd-color: #555;
 
-    --save-color:           #00a846;
+    --save-color: #00a846;
 
     /* Branding (System Light) */
-    --brand-gradient:       linear-gradient(135deg, #CB1E1E 0%, #FF4B2B 100%);
-    --brand-shadow:         drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    --brand-gradient: linear-gradient(135deg, #CB1E1E 0%, #FF4B2B 100%);
+    --brand-shadow: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
   }
 }
 
@@ -426,24 +426,26 @@ body {
 /**
  * Toggle states based on checked attribute
  */
-.toggle-switch input:checked + .slider {
-  background: #cc0000; /* YouTube's primary brand red */
+.toggle-switch input:checked+.slider {
+  background: #cc0000;
+  /* YouTube's primary brand red */
 }
 
-.toggle-switch input:checked + .slider::before {
+.toggle-switch input:checked+.slider::before {
   transform: translateX(18px);
   background: #fff;
 }
 
-.toggle-switch.small input:checked + .slider::before {
+.toggle-switch.small input:checked+.slider::before {
   transform: translateX(16px);
 }
 
-.toggle-switch.master input:checked + .slider {
-  background: #00c853; /* Active Success Green */
+.toggle-switch.master input:checked+.slider {
+  background: #00c853;
+  /* Active Success Green */
 }
 
-.toggle-switch.master input:checked + .slider::before {
+.toggle-switch.master input:checked+.slider::before {
   transform: translateX(22px);
 }
 
@@ -552,7 +554,7 @@ kbd {
   text-align: center;
   margin-top: 60px;
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .options-footer .primary-link-wrapper {
@@ -561,7 +563,9 @@ kbd {
 
 .options-footer .creator-text {
   margin: 0;
-  font-size: 11px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .options-footer .neattube-link {

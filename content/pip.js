@@ -67,7 +67,7 @@ const PipModule = (() => {
         await document.exitPictureInPicture();
         debugLog(_settings, 'PiP: Exited');
       } catch (err) {
-        debugLog(_settings, 'PiP: Failed to exit', err.message);
+        debugError(_settings, 'PiP: Failed to exit', err.message);
       }
       return;
     }
@@ -82,7 +82,7 @@ const PipModule = (() => {
       await video.requestPictureInPicture();
       debugLog(_settings, 'PiP: Entered');
     } catch (err) {
-      debugLog(_settings, 'PiP: Failed to enter', err.message);
+      debugError(_settings, 'PiP: Failed to enter', err.message);
     }
   }
 

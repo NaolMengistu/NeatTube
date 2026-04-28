@@ -16,11 +16,17 @@
         <img src="../icons/icon32.png" alt="NeatTube" class="brand-icon">
         <h1>NeatTube</h1>
       </div>
-      <!-- Global Master Toggle: Disables all features when unchecked -->
-      <label class="toggle-switch master-toggle" id="master-toggle-label">
-        <input type="checkbox" id="extensionEnabled">
-        <span class="slider"></span>
-      </label>
+      <div class="header-controls">
+        <!-- Theme Switcher: Cycles through Dark, Light, and System modes -->
+        <button id="theme-cycle-btn" class="theme-cycle-btn" title="Cycle Theme">
+          <span id="header-theme-icon"></span>
+        </button>
+        <!-- Global Master Toggle: Disables all features when unchecked -->
+        <label class="toggle-switch master-toggle" id="master-toggle-label">
+          <input type="checkbox" id="extensionEnabled">
+          <span class="slider"></span>
+        </label>
+      </div>
     </header>
 
     <div class="divider"></div>
@@ -96,7 +102,7 @@
     <footer class="popup-footer">
       <!-- Opens the full chrome-extension:// options page -->
       <a href="#" id="open-options" class="options-link"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Full Settings</a>
-      <span class="yt-note">Only active on youtube.com</span>
+      <span class="yt-note">Only active on YouTube</span>
     </footer>
   </div>
 

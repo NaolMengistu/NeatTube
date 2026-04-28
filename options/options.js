@@ -21,7 +21,7 @@ const DEFAULTS = {
   pictureInPicture: true,
   autoPip: false,
   membersOnlyFilter: true,
-  hideMembersBadges: true,
+  hideMembersBadges: false,
   hideMembersShelves: true,
   dislikeCount: true,
   autoQuality: true,

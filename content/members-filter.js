@@ -74,6 +74,8 @@ const MembersFilterModule = (() => {
       'ytd-grid-video-renderer',
       'ytd-shelf-renderer',
       'ytd-reel-item-renderer',
+      'yt-lockup-view-model',
+      'ytd-rich-grid-media',
     ];
 
     let hiddenCount = 0;
@@ -96,7 +98,7 @@ const MembersFilterModule = (() => {
         // usually hides. We don't check the *entire* container to avoid 
         // accidentally hiding a video just because a user mentioned it in a title.
         const badgeElements = container.querySelectorAll(
-          'ytd-badge-supported-renderer, .badge, [class*="badge"], [class*="overlay-text"], [aria-label]'
+          'ytd-badge-supported-renderer, .badge, badge-shape, [class*="badge"], [class*="overlay-text"], [aria-label]'
         );
         for (const badge of badgeElements) {
           const text = badge.textContent || badge.getAttribute('aria-label') || '';

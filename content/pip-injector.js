@@ -1,17 +1,5 @@
 /**
- * NeatTube — Picture-in-Picture (PiP) Injector
- * 
- * Crucial Context: 
- * This script runs in the page's "Main World" (YouTube's actual JavaScript context).
- * 
- * Why this is necessary:
- * Content scripts run in an "isolated world." While they share the DOM, they 
- * have separate JavaScript objects (like 'navigator'). Chrome's native 
- * Auto-PiP feature only checks the "Main World" for Media Session handlers. 
- * 
- * This script registers the 'enterpictureinpicture' handler that Chrome invokes 
- * when a user switches tabs, allowing us to bypass the standard "user gesture" 
- * requirement and pop the video out automatically.
+ * NeatTube — Picture-in-Picture (PiP) Injector (Main World)
  */
 
 (function () {
@@ -22,61 +10,111 @@
   var TAG = '[NeatTube PiP]';
   var debug = scriptTag.dataset.debug === 'true';
 
-  /**
-   * Internal logger that respects the debug flag passed from the content script.
-   */
   function log() {
     if (debug) console.debug.apply(console, [TAG].concat(Array.prototype.slice.call(arguments)));
   }
 
-  // Check if the browser supports the Media Session API
-  if ('mediaSession' in navigator) {
-    try {
-      /**
-       * We register the 'enterpictureinpicture' action handler. 
-       * When Chrome detects the user is switching tabs while a video is playing, 
-       * it looks for this specific handler to decide if it should trigger 
-       * automatic Picture-in-Picture.
-       */
-      navigator.mediaSession.setActionHandler('enterpictureinpicture', function () {
-        var video = document.querySelector('video.html5-main-video');
-        if (!video) {
-          log('Auto-PiP triggered, but no video found on page.');
-          return;
-        }
+  function findBestVideo() {
+    var videos = document.querySelectorAll('video');
+    var best = null;
+    var maxScore = -1;
 
-        video.requestPictureInPicture()
-          .then(function () {
-            log('PiP window opened (via Media Session).');
-          })
-          .catch(function (err) {
-            log('Failed to open PiP window:', err.name, err.message);
-          });
-      });
-      log('Media Session handler registered successfully.');
-    } catch (err) {
-      log('Could not register Media Session handler:', err.message);
+    for (var i = 0; i < videos.length; i++) {
+      var v = videos[i];
+      // We are more lenient here: readyState 1 (Metadata) is enough to prime the handler
+      if (v.readyState === 0 || v.disablePictureInPicture) continue;
+      
+      var rect = v.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+
+      var score = (rect.width * rect.height) + (v.paused ? 0 : 1000000);
+      if (score > maxScore) {
+        maxScore = score;
+        best = v;
+      }
     }
-  } else {
-    log('Media Session API is not supported in this browser.');
+    return best;
   }
 
   /**
-   * Listen for a disable signal from the isolated-world content script.
-   * 
-   * pip.js can't run inline scripts (YouTube's CSP blocks them), so instead
-   * it dispatches a CustomEvent on the document. We catch it here in the main
-   * world and cleanly null the Media Session handler — no CSP violation.
+   * The Auto-PiP Handler.
+   */
+  function handleAutoPip() {
+    log('>>> Browser triggered "enterpictureinpicture" action handler.');
+    var video = findBestVideo();
+    if (!video) {
+      log('Auto-PiP Error: No active video found.');
+      return;
+    }
+
+    if (document.pictureInPictureElement === video) return;
+
+    video.requestPictureInPicture()
+      .then(function () { log('Auto-PiP: Success'); })
+      .catch(function (err) { 
+        log('Auto-PiP: Rejected by browser.', err.message);
+        // Fallback: If the browser rejected it, it's often due to lack of User Activation.
+        // We can't fix that here, but we log the warning for the user.
+      });
+  }
+
+  /**
+   * RE-REGISTRATION LOGIC
+   */
+  function registerHandler() {
+    if (!('mediaSession' in navigator)) return;
+
+    try {
+      // Re-apply the handler
+      navigator.mediaSession.setActionHandler('enterpictureinpicture', handleAutoPip);
+      
+      // SYNC PLAYBACK STATE
+      // Chrome's Auto-PiP heuristic requires the Media Session to be 'playing'.
+      // If YouTube's internal manager sets it to 'none', Auto-PiP will break.
+      var video = findBestVideo();
+      if (video && !video.paused) {
+        if (navigator.mediaSession.playbackState !== 'playing') {
+          navigator.mediaSession.playbackState = 'playing';
+          log('Playback state forced to "playing" for Auto-PiP eligibility.');
+        }
+      }
+      
+      log('Media Session handler reinforced.');
+    } catch (err) {
+      log('Registration failed:', err.message);
+    }
+  }
+
+  // REINFORCEMENT CYCLE
+  var registrationInterval = setInterval(registerHandler, 2000);
+
+  // EVENT LISTENERS
+  document.addEventListener('yt-navigate-finish', function() {
+    log('Navigation detected, re-priming PiP...');
+    setTimeout(registerHandler, 500); // Small delay to let YouTube's manager finish
+    setTimeout(registerHandler, 2000);
+  });
+
+  window.addEventListener('play', registerHandler, true);
+
+  // INITIAL RUN
+  registerHandler();
+
+  // Test Hook
+  window.__NeatTube_TestPiP = handleAutoPip;
+
+  /**
+   * CLEANUP
    */
   document.addEventListener('neattube-pip-disable', function onDisable() {
     document.removeEventListener('neattube-pip-disable', onDisable);
+    if (registrationInterval) clearInterval(registrationInterval);
+    delete window.__NeatTube_TestPiP;
+
     if ('mediaSession' in navigator) {
       try {
         navigator.mediaSession.setActionHandler('enterpictureinpicture', null);
-        log('Media Session handler cleared.');
-      } catch (err) {
-        log('Could not clear Media Session handler:', err.message);
-      }
+      } catch (err) {}
     }
   });
 })();

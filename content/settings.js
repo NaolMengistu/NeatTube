@@ -25,7 +25,7 @@ const DEFAULTS = Object.freeze({
   pictureInPicture: true,
   autoPip: false,
   membersOnlyFilter: true,
-  hideMembersBadges: true,
+  hideMembersBadges: false,
   hideMembersShelves: true,
   dislikeCount: true,
   autoQuality: true,
@@ -73,12 +73,28 @@ const NeatTubeSettings = {
 
 /**
  * Global technical logger.
- * Only outputs to the console if 'Debug Mode' is manually enabled in the 
- * extension options. This keeps the user's console clean unless they are 
- * actively troubleshooting.
+ * Only outputs to the console if 'Debug Mode' is manually enabled.
  */
-function debugLog(settings, ...args) {
+function debugLog(settings, message, ...args) {
   if (settings && settings.debugMode) {
-    console.debug('[NeatTube]', ...args);
+    console.log('%c[NeatTube]%c ' + message, 'color: #FF4B2B; font-weight: bold;', 'color: inherit;', ...args);
+  }
+}
+
+/**
+ * Global warning logger for Debug Mode.
+ */
+function debugWarn(settings, message, ...args) {
+  if (settings && settings.debugMode) {
+    console.warn('%c[NeatTube]%c ' + message, 'color: #FF4B2B; font-weight: bold;', 'color: inherit;', ...args);
+  }
+}
+
+/**
+ * Global error logger for Debug Mode.
+ */
+function debugError(settings, message, ...args) {
+  if (settings && settings.debugMode) {
+    console.error('%c[NeatTube]%c ' + message, 'color: #FF4B2B; font-weight: bold;', 'color: inherit;', ...args);
   }
 }

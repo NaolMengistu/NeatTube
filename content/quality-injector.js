@@ -1,13 +1,5 @@
 /**
- * NeatTube — Quality Injector Script
- * 
- * Context: 
- * Chrome extensions run in an "Isolated World." This means they can't access 
- * the internal JavaScript variables of the website (YouTube's 'movie_player').
- * 
- * Solution:
- * We inject this script directly into the page's "Main World." This allows us 
- * to talk directly to YouTube's internal API and force the playback resolution.
+ * NeatTube — Quality Injector Script (Main World)
  */
 
 (function () {
@@ -19,45 +11,30 @@
   var debug = scriptTag.dataset.debug === 'true';
   var preferred = scriptTag.dataset.preferred;
   var qualityOrder = JSON.parse(scriptTag.dataset.order || '[]');
-  var attempts = 0;
-  var maxAttempts = 20;
+  
+  var _attempts = 0;
+  var _maxAttempts = 30;
+  var _interval = null;
 
-  /**
-   * Internal logger that respects the debug setting from the extension.
-   */
   function log() {
     if (debug) console.debug.apply(console, [TAG].concat(Array.prototype.slice.call(arguments)));
   }
 
-  /**
-   * The "Next Best Quality" Logic.
-   * If a user wants 4K but the video only goes up to 1080p, we "fall down" 
-   * the priority list until we find the highest resolution the video 
-   * actually supports.
-   */
-  function findBestAvailable(preferred, available) {
-    if (preferred === 'auto') return null;
-    var prefIndex = qualityOrder.indexOf(preferred);
-    if (prefIndex === -1) return null;
-    for (var i = prefIndex; i < qualityOrder.length; i++) {
+  function findBestAvailable(pref, available) {
+    if (pref === 'auto') return null;
+    var idx = qualityOrder.indexOf(pref);
+    if (idx === -1) return null;
+    for (var i = idx; i < qualityOrder.length; i++) {
       if (available.indexOf(qualityOrder[i]) !== -1) return qualityOrder[i];
     }
     return null;
   }
 
-  /**
-   * The Core API Call.
-   * We attempt to find YouTube's 'movie_player' object and invoke its 
-   * setPlaybackQuality methods. 
-   */
   function trySetQuality() {
-    attempts++;
+    _attempts++;
     try {
-      var player = document.getElementById('movie_player');
-      if (!player) return false;
-
-      // Ensure the player is fully initialized and API methods are live
-      if (typeof player.getAvailableQualityLevels !== 'function') return false;
+      var player = document.getElementById('movie_player') || document.querySelector('.html5-video-player');
+      if (!player || typeof player.getAvailableQualityLevels !== 'function') return false;
 
       var available = player.getAvailableQualityLevels();
       if (!available || available.length === 0) return false;
@@ -68,52 +45,65 @@
       if (!target) return true;
 
       var current = player.getPlaybackQuality();
-      if (current === target) return true; // Quality is already correct
+      if (current === target) {
+        log('Quality already matched:', target);
+        return true; 
+      }
 
-      // Call both methods for maximum compatibility across player versions
+      // Aggressive application across multiple API versions
       if (typeof player.setPlaybackQualityRange === 'function') {
         player.setPlaybackQualityRange(target, target);
       }
       if (typeof player.setPlaybackQuality === 'function') {
         player.setPlaybackQuality(target);
       }
+      
+      // Update internal player state if possible
+      if (player.setOption) {
+        player.setOption('video-quality-selection', target);
+      }
 
-      log('Applied quality:', target, 'on attempt', attempts);
+      log('Quality applied:', target, '(Attempt ' + _attempts + ')');
       return true;
     } catch (e) {
-      log('Application error:', e.message);
+      log('Execution error:', e.message);
       return false;
     }
   }
 
-  /**
-   * The Polling Loop.
-   * YouTube's player is a complex object that takes time to load. We poll 
-   * every 200ms until the API becomes responsive or we hit our limit.
-   */
-  var interval = setInterval(function () {
-    if (attempts >= maxAttempts) {
-      clearInterval(interval);
-      log('Stopping after', maxAttempts, 'attempts.');
-      return;
-    }
-    if (trySetQuality()) {
-      clearInterval(interval);
-    }
-  }, 200);
-
-  /**
-   * The Safety Net.
-   * Sometimes a video starts playing late (e.g. after buffering). We hook into 
-   * the player's state change event to re-apply the quality whenever the 
-   * video begins playing or buffering.
-   */
-  var playerObj = document.getElementById('movie_player');
-  if (playerObj && typeof playerObj.addEventListener === 'function') {
-    playerObj.addEventListener('onStateChange', function (state) {
-      if (state === 1 || state === 3) { // 1 = Playing, 3 = Buffering
-        trySetQuality();
+  function startPolling() {
+    _attempts = 0;
+    if (_interval) clearInterval(_interval);
+    _interval = setInterval(function () {
+      if (_attempts >= _maxAttempts) {
+        clearInterval(_interval);
+        return;
       }
-    });
+      if (trySetQuality()) {
+        // We continue polling for a few more frames to ensure it sticks
+        if (_attempts > 5) clearInterval(_interval);
+      }
+    }, 250);
   }
+
+  // Lifecycle 1: Initial load
+  startPolling();
+
+  // Lifecycle 2: State changes (Buffering/Playing)
+  document.addEventListener('onStateChange', function(e) {
+    var state = e.detail; // External events often wrap data in detail
+    if (state === 1 || state === 3) trySetQuality();
+  }, true);
+
+  // Lifecycle 3: SPA Navigations (Main World context)
+  window.addEventListener('yt-navigate-finish', function() {
+    log('SPA Navigation detected in main world.');
+    startPolling();
+  });
+
+  // Safety net: Intercept player initialization via Event Bus if available
+  window.addEventListener('yt-player-updated', function() {
+    trySetQuality();
+  });
+
 })();

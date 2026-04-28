@@ -22,7 +22,7 @@ A clean Manifest V3 Chrome/Chromium extension for YouTube that combines multiple
 
 ### Picture-in-Picture
 - Instantly pop out the active video into a floating window using `Alt+P`
-- **Auto-PiP (Beta)**: Automatically triggers Picture-in-Picture when you switch tabs (uses Media Session API)
+- **Auto-PiP (Beta)**: Automatically triggers Picture-in-Picture when you switch tabs (uses Media Session API). Works on both YouTube and YouTube Music.
 - Intelligently finds the main playing video, ignoring suspended or background players
 - Works seamlessly across YouTube's internal SPA page loads
 
